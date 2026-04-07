@@ -322,9 +322,10 @@ def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_od
         # Form: weighted L5 / L40 ratio (most recent match counts double)
         if player:
             scores = _extract_scores(player)
-            l5 = _weighted_avg(scores, 5)
+            l5 = _avg(scores, 5)
             l40 = _avg(scores, 40)
-            form = l5 / l40 if l40 > 0 else 0
+            wl5 = _weighted_avg(scores, 5)
+            form = wl5 / l40 if l40 > 0 else 0
         else:
             l5 = 0
             l40 = 0
