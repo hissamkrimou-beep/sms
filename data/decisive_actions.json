@@ -1,0 +1,186 @@
+{
+  "football": {
+    "assist_penalty_won": {
+      "target": 1,
+      "label": "penalty won assist"
+    },
+    "clearance_off_line": {
+      "target": 1,
+      "label": "clearance off the line"
+    },
+    "error_lead_to_goal": {
+      "target": 1,
+      "label": "error leading to goal"
+    },
+    "goal_assist": {
+      "target": 1,
+      "label": "assist"
+    },
+    "goals": {
+      "target": 1,
+      "label": "goal"
+    },
+    "last_man_tackle": {
+      "target": 1,
+      "label": "last man tackle"
+    },
+    "own_goals": {
+      "target": 1,
+      "label": "own goal"
+    },
+    "penalty_conceded": {
+      "target": 1,
+      "label": "penalty conceded"
+    },
+    "penalty_save": {
+      "target": 1,
+      "label": "penalty save"
+    },
+    "red_card": {
+      "target": 1,
+      "label": "red card"
+    },
+    "accurate_long_balls": {
+      "target": 8,
+      "label": "accurate long ball"
+    },
+    "accurate_pass": {
+      "target": 60,
+      "label": "accurate pass"
+    },
+    "big_chance_created": {
+      "target": 1,
+      "label": "big chance created"
+    },
+    "big_chance_missed": {
+      "target": 1,
+      "label": "big chance missed"
+    },
+    "duel_lost": {
+      "target": 6,
+      "label": "duel lost"
+    },
+    "duel_won": {
+      "target": 7,
+      "label": "duel won"
+    },
+    "effective_clearance": {
+      "target": 2,
+      "label": "effective clearance"
+    },
+    "fouls": {
+      "target": 3,
+      "label": "foul"
+    },
+    "interception_won": {
+      "target": 2,
+      "label": "interception"
+    },
+    "missed_pass": {
+      "target": 15,
+      "label": "missed pass"
+    },
+    "ontarget_scoring_att": {
+      "target": 2,
+      "label": "shot on target"
+    },
+    "pen_area_entries": {
+      "target": 5,
+      "label": "penalty area entry"
+    },
+    "penalty_kick_missed": {
+      "target": 1,
+      "label": "penalty missed"
+    },
+    "penalty_won": {
+      "target": 1,
+      "label": "penalty won"
+    },
+    "poss_lost_ctrl": {
+      "target": 10,
+      "label": "possession lost"
+    },
+    "poss_won": {
+      "target": 6,
+      "label": "possession won"
+    },
+    "saves": {
+      "target": 5,
+      "label": "save"
+    },
+    "successful_final_third_passes": {
+      "target": 20,
+      "label": "successful final third pass"
+    },
+    "was_fouled": {
+      "target": 2,
+      "label": "foul suffered"
+    },
+    "won_contest": {
+      "target": 3,
+      "label": "dribble"
+    },
+    "won_tackle": {
+      "target": 3,
+      "label": "tackle won"
+    },
+    "yellow_card": {
+      "target": 1,
+      "label": "yellow card"
+    }
+  },
+  "nba": {
+    "steals": {
+      "target": 3,
+      "label": "Steal"
+    },
+    "blocks": {
+      "target": 2,
+      "label": "Block"
+    },
+    "rebounds": {
+      "target": 8,
+      "label": "Rebound"
+    },
+    "assists": {
+      "target": 5,
+      "label": "Assist"
+    },
+    "three_points_made": {
+      "target": 3,
+      "label": "Three-Pointer"
+    },
+    "points": {
+      "target": 20,
+      "label": "Point"
+    },
+    "turnovers": {
+      "target": 3,
+      "label": "Turnover"
+    }
+  },
+  "baseball": {
+    "hitting_runs": { "target": 1, "label": "Run", "short": "R" },
+    "hitting_runs_batted_in": { "target": 1, "label": "Run Batted In", "short": "RBI" },
+    "hitting_singles": { "target": 1, "label": "Single", "short": "1B" },
+    "hitting_doubles": { "target": 1, "label": "Double", "short": "2B" },
+    "hitting_triples": { "target": 1, "label": "Triple", "short": "3B" },
+    "hitting_home_runs": { "target": 1, "label": "Home Run", "short": "HR" },
+    "hitting_walks": { "target": 1, "label": "Walk", "short": "BB" },
+    "hitting_strikeouts": { "target": 1, "label": "Strikeout", "short": "K" },
+    "hitting_stolen_bases": { "target": 1, "label": "Stole Base", "short": "SB" },
+    "hitting_caught_stealing": { "target": 1, "label": "Caught Stealing", "short": "CS" },
+    "hitting_hit_by_pitch": { "target": 1, "label": "Hit By Pitch", "short": "HBP" },
+    "pitching_innings_pitched": { "target": 1, "label": "Inning Pitched", "short": "IP" },
+    "pitching_strikeouts": { "target": 1, "label": "Strikeout", "short": "K" },
+    "pitching_hits_allowed": { "target": 1, "label": "Hit Allowed", "short": "H" },
+    "pitching_earned_runs": { "target": 1, "label": "Earned Run", "short": "ER" },
+    "pitching_walks": { "target": 1, "label": "Walk", "short": "BB" },
+    "pitching_hit_batsmen": { "target": 1, "label": "Hit Batsmen", "short": "HBP" },
+    "pitching_wins": { "target": 1, "label": "Win", "short": "W" },
+    "pitching_relief_appearance": { "target": 1, "label": "Relief Appearance", "short": "RA" },
+    "pitching_saves": { "target": 1, "label": "Save", "short": "S" },
+    "pitching_holds": { "target": 1, "label": "Hold", "short": "H" },
+    "pitching_no_hitters": { "target": 1, "label": "No Hitter", "short": "NH" }
+  }
+}

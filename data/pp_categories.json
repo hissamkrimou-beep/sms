@@ -1,0 +1,62 @@
+{
+  "standalone": {
+    "Premier League": {
+      "leagues": ["Premier League"],
+      "thresholds": { "cat3": [10, 16], "cat4": [17, null] }
+    },
+    "LaLiga": {
+      "leagues": ["LALIGA EA Sports"],
+      "thresholds": { "cat3": [10, 15], "cat4": [16, null] }
+    },
+    "Bundesliga": {
+      "leagues": ["Bundesliga"],
+      "thresholds": { "cat3": [10, 14], "cat4": [15, null] }
+    },
+    "Ligue 1": {
+      "leagues": ["Ligue 1"],
+      "thresholds": { "cat3": [10, 14], "cat4": [15, null] }
+    },
+    "MLS": {
+      "leagues": ["Major League Soccer"],
+      "thresholds": { "cat3": [10, 22], "cat4": [23, null] }
+    },
+    "J-League": {
+      "leagues": ["J1 100 Year Vision League"],
+      "thresholds": { "cat3": [10, 15], "cat4": [16, null] }
+    },
+    "K-League": {
+      "leagues": ["K League 1"],
+      "thresholds": { "cat3": [10, 10], "cat4": [11, null] }
+    },
+    "Jupiler": {
+      "leagues": ["Jupiler Pro League"],
+      "thresholds": { "cat3": [10, 13], "cat4": [14, null] }
+    },
+    "Eredivisie": {
+      "leagues": ["VriendenLoterij Eredivisie"],
+      "thresholds": { "cat3": [10, 14], "cat4": [15, null] }
+    }
+  },
+  "cross_league": {
+    "Champions": {
+      "leagues": ["Premier League", "LALIGA EA Sports", "Bundesliga", "Ligue 1"],
+      "thresholds": { "cat1": [10, 29], "cat2": [30, 49], "cat3": [50, 69], "cat4": [70, null] }
+    },
+    "Challengers": {
+      "leagues": ["Austrian Bundesliga", "Danish Superliga", "Primeira Liga", "Scottish Premiership", "Süper Lig"],
+      "thresholds": { "cat2": [10, 18], "cat3": [19, 27], "cat4": [28, null] }
+    },
+    "Contenders": {
+      "leagues": ["2. Bundesliga", "Ligue 2 BKT", "Eliteserien", "SuperSport HNL"],
+      "thresholds": { "cat1": [10, 18], "cat2": [19, 27], "cat3": [28, 54], "cat4": [55, null] }
+    },
+    "All-Star": {
+      "leagues": ["ALL"],
+      "thresholds": { "cat1": [10, 50], "cat2": [51, 125], "cat3": [126, 200], "cat4": [201, null] }
+    },
+    "U23": {
+      "leagues": ["ALL"],
+      "thresholds": { "cat1": [10, 50], "cat2": [51, 125], "cat3": [126, 200], "cat4": [201, null] }
+    }
+  }
+}
