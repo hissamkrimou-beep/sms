@@ -213,15 +213,10 @@ def _build_predictions_lookup(predictions, all_players, licensed_teams, config, 
     slugified names, and normalized names to win probabilities."""
     lookup = dict(predictions)  # start with Odds API names
 
-    def _set_max(key, val):
-        """Only store if higher than existing value (avoid overwriting with lower odds)."""
-        if val > lookup.get(key, 0):
-            lookup[key] = val
-
     # For each Odds API team name, store normalized + slugified variants
     for name, pct in predictions.items():
-        _set_max(_normalize(name), pct)
-        _set_max(_slugify(name), pct)
+        lookup.setdefault(_normalize(name), pct)
+        lookup.setdefault(_slugify(name), pct)
 
     # For each Odds API team name, find corresponding Sorare slug
     for league_cfg in config.get("leagues", []):
@@ -229,7 +224,7 @@ def _build_predictions_lookup(predictions, all_players, licensed_teams, config, 
         for name, pct in predictions.items():
             sorare_slug = _match_team_to_sorare(name, league_slugs, overrides)
             if sorare_slug:
-                _set_max(sorare_slug, pct)
+                lookup.setdefault(sorare_slug, pct)
 
     # Also map Sorare club display names
     seen_clubs = set()
@@ -238,9 +233,9 @@ def _build_predictions_lookup(predictions, all_players, licensed_teams, config, 
         club_name = club.get("name", "")
         team_slug = p.get("_team_slug", "")
         if club_name and club_name not in seen_clubs and team_slug in lookup:
-            _set_max(club_name, lookup[team_slug])
-            _set_max(_normalize(club_name), lookup[team_slug])
-            _set_max(_slugify(club_name), lookup[team_slug])
+            lookup.setdefault(club_name, lookup[team_slug])
+            lookup.setdefault(_normalize(club_name), lookup[team_slug])
+            lookup.setdefault(_slugify(club_name), lookup[team_slug])
             seen_clubs.add(club_name)
 
     return lookup
@@ -692,12 +687,16 @@ if st.button("Charger", type="primary"):
                 continue
             try:
                 matches = fetch_odds(sport_key, odds_key)
-                for m in matches:
+                # Sort by date so first match per team wins
+                sorted_matches = sorted(matches, key=lambda x: x.get("commence_time", ""))
+                for m in sorted_matches:
                     home = m["home_team"]
                     away = m["away_team"]
-                    # Keep highest win% if team appears in multiple matches
-                    team_predictions[home] = max(m["home_pct"], team_predictions.get(home, 0))
-                    team_predictions[away] = max(m["away_pct"], team_predictions.get(away, 0))
+                    # Keep first (nearest) match per team
+                    if home not in team_predictions:
+                        team_predictions[home] = m["home_pct"]
+                    if away not in team_predictions:
+                        team_predictions[away] = m["away_pct"]
                     n_fixtures_pred += 1
 
                     commence = m.get("commence_time", "")
