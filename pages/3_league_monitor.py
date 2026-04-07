@@ -181,6 +181,17 @@ def _avg(scores, n):
     return sum(vals) / len(vals) if vals else 0
 
 
+def _weighted_avg(scores, n):
+    """Weighted average of the last N scores (most recent counts double)."""
+    played = [s["score"] for s in scores if s["score"] > 0]
+    vals = played[:n]
+    if not vals:
+        return 0
+    # First element (most recent) gets weight 2, rest get weight 1
+    weights = [2] + [1] * (len(vals) - 1)
+    return sum(v * w for v, w in zip(vals, weights)) / sum(weights)
+
+
 def _total_mins_l5(player):
     """Sum of minsPlayed over the last 5 so5Scores."""
     raw = player.get("so5Scores") or []
@@ -308,10 +319,10 @@ def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_od
         if not c.get("position") and player:
             c["position"] = player.get("position", "")
 
-        # Form: L5 / L40 ratio (current form vs overall form)
+        # Form: weighted L5 / L40 ratio (most recent match counts double)
         if player:
             scores = _extract_scores(player)
-            l5 = _avg(scores, 5)
+            l5 = _weighted_avg(scores, 5)
             l40 = _avg(scores, 40)
             form = l5 / l40 if l40 > 0 else 0
         else:
