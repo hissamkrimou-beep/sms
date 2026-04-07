@@ -213,10 +213,15 @@ def _build_predictions_lookup(predictions, all_players, licensed_teams, config, 
     slugified names, and normalized names to win probabilities."""
     lookup = dict(predictions)  # start with Odds API names
 
+    def _set_max(key, val):
+        """Only store if higher than existing value (avoid overwriting with lower odds)."""
+        if val > lookup.get(key, 0):
+            lookup[key] = val
+
     # For each Odds API team name, store normalized + slugified variants
     for name, pct in predictions.items():
-        lookup[_normalize(name)] = pct
-        lookup[_slugify(name)] = pct
+        _set_max(_normalize(name), pct)
+        _set_max(_slugify(name), pct)
 
     # For each Odds API team name, find corresponding Sorare slug
     for league_cfg in config.get("leagues", []):
@@ -224,7 +229,7 @@ def _build_predictions_lookup(predictions, all_players, licensed_teams, config, 
         for name, pct in predictions.items():
             sorare_slug = _match_team_to_sorare(name, league_slugs, overrides)
             if sorare_slug:
-                lookup[sorare_slug] = pct
+                _set_max(sorare_slug, pct)
 
     # Also map Sorare club display names
     seen_clubs = set()
@@ -233,9 +238,9 @@ def _build_predictions_lookup(predictions, all_players, licensed_teams, config, 
         club_name = club.get("name", "")
         team_slug = p.get("_team_slug", "")
         if club_name and club_name not in seen_clubs and team_slug in lookup:
-            lookup[club_name] = lookup[team_slug]
-            lookup[_normalize(club_name)] = lookup[team_slug]
-            lookup[_slugify(club_name)] = lookup[team_slug]
+            _set_max(club_name, lookup[team_slug])
+            _set_max(_normalize(club_name), lookup[team_slug])
+            _set_max(_slugify(club_name), lookup[team_slug])
             seen_clubs.add(club_name)
 
     return lookup
@@ -328,28 +333,21 @@ def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_od
 
         # Win probability — try team_name, _team_slug, slugified, normalized, activeClub
         team = c.get("team_name", "")
-        _debug_method = ""
         odds = predictions_lookup.get(team, 0)
-        if odds: _debug_method = "exact"
         if odds == 0:
             odds = predictions_lookup.get(_normalize(team), 0)
-            if odds: _debug_method = f"normalized({_normalize(team)})"
         if odds == 0:
             odds = predictions_lookup.get(_slugify(team), 0)
-            if odds: _debug_method = f"slugified({_slugify(team)})"
         if odds == 0:
             p = slug_to_player.get(slug)
             if p:
                 odds = predictions_lookup.get(p.get("_team_slug", ""), 0)
-                if odds: _debug_method = f"team_slug({p.get('_team_slug', '')})"
                 if odds == 0:
                     club_name = (p.get("activeClub") or {}).get("name", "")
                     if club_name:
                         odds = predictions_lookup.get(club_name, 0)
-                        if odds: _debug_method = f"club_name({club_name})"
                         if odds == 0:
                             odds = predictions_lookup.get(_slugify(club_name), 0)
-                            if odds: _debug_method = f"club_slugified({_slugify(club_name)})"
         # Last resort: prefix match on slugified team name
         if odds == 0 and team:
             team_sl = _slugify(team)
@@ -357,10 +355,8 @@ def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_od
                 for key, val in predictions_lookup.items():
                     if key.startswith(team_sl) or team_sl.startswith(key):
                         odds = val
-                        _debug_method = f"prefix({team_sl}~{key})"
                         break
         c["_win_prob"] = odds
-        c["_debug_match"] = _debug_method or f"NO MATCH team={team}"
         raw_odds.append(odds)
 
         # Supply ratios — SR and Unique separately
@@ -699,8 +695,9 @@ if st.button("Charger", type="primary"):
                 for m in matches:
                     home = m["home_team"]
                     away = m["away_team"]
-                    team_predictions[home] = m["home_pct"]
-                    team_predictions[away] = m["away_pct"]
+                    # Keep highest win% if team appears in multiple matches
+                    team_predictions[home] = max(m["home_pct"], team_predictions.get(home, 0))
+                    team_predictions[away] = max(m["away_pct"], team_predictions.get(away, 0))
                     n_fixtures_pred += 1
 
                     commence = m.get("commence_time", "")
@@ -1370,7 +1367,6 @@ if st.session_state.get("lm_loaded"):
                     "SR supply": c.get("_sr_supply", ""),
                     "U supply": c.get("_u_supply", ""),
                     "Score reco": c.get("_score_reco", 0),
-                    "DEBUG match": c.get("_debug_match", ""),
                 })
             st.metric("Top 200", f"{len(reco_rows)} / {len(reco_field)} joueurs de champ")
             st.dataframe(pd.DataFrame(reco_rows), use_container_width=True, hide_index=True)
