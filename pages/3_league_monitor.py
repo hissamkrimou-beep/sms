@@ -266,29 +266,42 @@ def _build_predictions_lookup(predictions, all_players, licensed_teams, config, 
 def _start_odds_multiplier(start_odds):
     """Convert startOdds (0-1) to a score multiplier.
 
-    < 0.5  → excluded (returns 0)
-    0.5    → 0.3
-    0.6    → 0.5
-    0.7    → 0.7
-    0.8    → 0.9
-    0.9+   → 1.0
-    Linear interpolation between breakpoints.
+    < 0.5   → excluded (returns 0)
+    0.5-0.79 → penalized (linear 0.3 → 1.0)
+    >= 0.79  → no penalty (returns 1.0)
     """
     if start_odds is None:
         return 1.0  # no data → no penalty
     if start_odds < 0.5:
         return 0.0  # excluded
-    breakpoints = [(0.5, 0.3), (0.6, 0.5), (0.7, 0.7), (0.8, 0.9), (0.9, 1.0)]
-    for i in range(len(breakpoints) - 1):
-        x0, y0 = breakpoints[i]
-        x1, y1 = breakpoints[i + 1]
-        if start_odds <= x1:
-            t = (start_odds - x0) / (x1 - x0)
-            return y0 + t * (y1 - y0)
-    return 1.0
+    if start_odds >= 0.79:
+        return 1.0
+    # Linear interpolation: 0.5 → 0.3, 0.79 → 1.0
+    t = (start_odds - 0.5) / (0.79 - 0.5)
+    return 0.3 + t * 0.7
 
 
-def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_odds_lookup=None):
+def _freshness_multiplier(latest_score_date, reference_date):
+    """Score multiplier based on how recently the player last played.
+
+    0-7 days   → 1.0  (no penalty)
+    8-14 days  → 0.8  (slight penalty)
+    15-21 days → 0.5  (moderate penalty)
+    22+ days   → 0.2  (heavy penalty)
+    """
+    if latest_score_date is None or reference_date is None:
+        return 0.5  # no data → moderate penalty
+    days_ago = (reference_date - latest_score_date).days
+    if days_ago <= 7:
+        return 1.0
+    if days_ago <= 14:
+        return 0.8
+    if days_ago <= 21:
+        return 0.5
+    return 0.2
+
+
+def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_odds_lookup=None, reference_date=None):
     """Compute recommendation score for each candidate dict.
 
     Each candidate must have keys: slug, team_name, _league.
@@ -320,7 +333,6 @@ def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_od
 
     raw_form = []
     raw_odds = []
-    raw_supply = []
 
     for c in candidates:
         slug = c.get("slug", "")
@@ -337,10 +349,12 @@ def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_od
             l40 = _avg(scores, 40)
             wl5 = _weighted_avg(scores, 5)
             form = wl5 / l40 if l40 > 0 else 0
+            c["_latest_score_date"] = _parse_score_date(scores[0]["date"]) if scores else None
         else:
             l5 = 0
             l40 = 0
             form = 0
+            c["_latest_score_date"] = None
         c["_l5_avg"] = round(l5, 1)
         c["_l40_avg"] = round(l40, 1)
         c["_form"] = round(form, 2)
@@ -387,24 +401,24 @@ def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_od
         u_available = int(supply_data.get("available_unique_supply", 0) or 0)
         c["_u_supply"] = "Disponible" if u_available >= 1 else "Vendu"
 
-        raw_supply.append(sr_ratio)
-
         # Start odds from SorareInside
         c["_start_odds"] = slug_start_odds.get(slug)
 
     # Normalize
     norm_form = _normalize_scores(raw_form)
     norm_odds = _normalize_scores(raw_odds)
-    norm_supply = _normalize_scores(raw_supply)
 
     for i, c in enumerate(candidates):
-        base_score = norm_form[i] * 0.33 + norm_odds[i] * 0.33 + norm_supply[i] * 0.33
-        multiplier = _start_odds_multiplier(c["_start_odds"])
-        c["_start_mult"] = round(multiplier, 2)
-        c["_score_reco"] = round(base_score * multiplier, 1)
+        base_score = norm_form[i] * 0.5 + norm_odds[i] * 0.5
+        start_mult = _start_odds_multiplier(c["_start_odds"])
+        fresh_mult = _freshness_multiplier(c.get("_latest_score_date"), reference_date)
+        c["_start_mult"] = round(start_mult, 2)
+        c["_fresh_mult"] = round(fresh_mult, 2)
+        c["_score_reco"] = round(base_score * start_mult * fresh_mult, 1)
 
-    # Exclude players with < 50% start odds (multiplier == 0)
+    # Exclude players with < 50% start odds or not in form (wL5/L40 < 1)
     candidates = [c for c in candidates if c.get("_start_mult", 1) > 0]
+    candidates = [c for c in candidates if c.get("_form", 0) >= 1.0]
     candidates.sort(key=lambda x: x.get("_score_reco", 0), reverse=True)
     return candidates
 
@@ -1264,7 +1278,7 @@ if st.session_state.get("lm_loaded"):
     score_by_slug = {}
     start_odds_lookup = st.session_state.get("lm_start_odds", {})
     if has_supply and all_reco:
-        all_reco = _compute_reco_scores(all_reco, supply_lookup, predictions, start_odds_lookup)
+        all_reco = _compute_reco_scores(all_reco, supply_lookup, predictions, start_odds_lookup, selected_date)
         for c in all_reco:
             score_by_slug[c["slug"]] = c.get("_score_reco", 0)
 
