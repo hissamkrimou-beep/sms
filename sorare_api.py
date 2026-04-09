@@ -140,7 +140,7 @@ query($slug: String!, $after: String) {
         position
         age
         activeClub { slug name }
-        so5Scores(last: 15) {
+        so5Scores(last: 40) {
           score
           playerGameStats { minsPlayed }
           game { date }
@@ -153,7 +153,7 @@ query($slug: String!, $after: String) {
 
 
 @st.cache_data(ttl=3600)
-def fetch_team_players_with_scores(team_slug, api_key=None, _v=4):
+def fetch_team_players_with_scores(team_slug, api_key=None, _v=5):
     all_nodes = []
     cursor = None
     while True:
