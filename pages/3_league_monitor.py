@@ -1533,7 +1533,30 @@ if st.session_state.get("lm_loaded"):
         else:
             checks.append(("ok", "Fraicheur scores", f"Tous les joueurs ont joue recemment (< {STALENESS_DAYS}j)"))
 
+        # 8. Unmatched Odds API teams
+        unmatched_teams = []
+        if raw_predictions:
+            all_league_slugs = []
+            for cfg in selected_cfgs:
+                all_league_slugs.extend(licensed_teams.get(cfg["licensed_teams_key"], []))
+            for team_name in raw_predictions:
+                matched_slug = _match_team_to_sorare(team_name, all_league_slugs, overrides)
+                if not matched_slug:
+                    unmatched_teams.append(team_name)
+            if unmatched_teams:
+                checks.append(("warning", "Matching equipes Odds API", f"{len(unmatched_teams)}/{len(raw_predictions)} equipes non matchees"))
+            else:
+                checks.append(("ok", "Matching equipes Odds API", f"{len(raw_predictions)} equipes toutes matchees"))
+
         # Display all checks
         for level, label, detail in checks:
             icon = ":white_check_mark:" if level == "ok" else ":warning:"
             st.markdown(f"{icon} **{label}** — {detail}")
+
+        # Detail: unmatched teams
+        if unmatched_teams:
+            with st.expander(f"Equipes non matchees ({len(unmatched_teams)})"):
+                st.caption("Ces equipes de l'Odds API n'ont pas de correspondance Sorare. "
+                           "Ajoutez-les dans team_name_overrides du config JSON.")
+                for t in sorted(unmatched_teams):
+                    st.code(f'"{t}": ""', language="json")
