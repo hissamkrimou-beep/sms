@@ -204,3 +204,42 @@ def fetch_start_odds(game_ids, si_api_key):
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
             continue
     return odds
+
+
+def fetch_player_prices_batch(slugs, since, api_key=None, batch_size=10):
+    """Fetch Limited tokenPrices for multiple players in batched GraphQL requests.
+
+    Uses aliased queries to fetch up to batch_size players per request.
+    Returns dict: slug → list of {"date": str, "eur_cents": int}
+    """
+    if not slugs:
+        return {}
+    result = {}
+    for start in range(0, len(slugs), batch_size):
+        batch = slugs[start:start + batch_size]
+        aliases = []
+        for i, slug in enumerate(batch):
+            aliases.append(
+                f'p{i}: player(slug: "{slug}") {{ '
+                f'tokenPrices(rarity: limited, since: "{since}", first: 100) {{ '
+                f'nodes {{ date amounts {{ eurCents }} }} }} }}'
+            )
+        query = "{ football { " + " ".join(aliases) + " } }"
+        try:
+            data = _graphql_request(query, api_key=api_key)
+            football = data.get("football", {})
+            for i, slug in enumerate(batch):
+                player_data = football.get(f"p{i}")
+                if not player_data:
+                    result[slug] = []
+                    continue
+                nodes = (player_data.get("tokenPrices") or {}).get("nodes") or []
+                result[slug] = [
+                    {"date": n["date"], "eur_cents": n["amounts"]["eurCents"]}
+                    for n in nodes
+                    if n.get("amounts", {}).get("eurCents")
+                ]
+        except Exception:
+            for slug in batch:
+                result.setdefault(slug, [])
+    return result

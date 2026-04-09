@@ -19,6 +19,7 @@ from api_football import (
 from sorare_api import (
     fetch_team_players_with_scores, fetch_start_odds,
     fetch_fixtures, fetch_fixture_games,
+    fetch_player_prices_batch,
 )
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -203,6 +204,36 @@ def _parse_score_date(date_str):
         return None
 
 
+def _compute_price_variation(prices, reference_date):
+    """Compute 7-day Limited price variation percentage.
+
+    Splits sales into last 7 days vs previous 7 days and returns
+    the percentage change between the two averages.
+    Returns None if insufficient data in either period.
+    """
+    if not prices or not reference_date:
+        return None
+    cutoff_recent = reference_date - timedelta(days=7)
+    cutoff_old = reference_date - timedelta(days=14)
+    recent = []
+    old = []
+    for p in prices:
+        d = _parse_score_date(p["date"])
+        if d is None:
+            continue
+        if d >= cutoff_recent:
+            recent.append(p["eur_cents"])
+        elif d >= cutoff_old:
+            old.append(p["eur_cents"])
+    if not recent or not old:
+        return None
+    avg_recent = sum(recent) / len(recent)
+    avg_old = sum(old) / len(old)
+    if avg_old == 0:
+        return None
+    return (avg_recent - avg_old) / avg_old * 100
+
+
 def _total_mins_l5(player):
     """Sum of minsPlayed over the last 5 so5Scores."""
     raw = player.get("so5Scores") or []
@@ -301,7 +332,7 @@ def _freshness_multiplier(latest_score_date, reference_date):
     return 0.2
 
 
-def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_odds_lookup=None, reference_date=None):
+def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_odds_lookup=None, reference_date=None, price_variations=None):
     """Compute recommendation score for each candidate dict.
 
     Each candidate must have keys: slug, team_name, _league.
@@ -333,6 +364,7 @@ def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_od
 
     raw_form = []
     raw_odds = []
+    raw_price = []
 
     for c in candidates:
         slug = c.get("slug", "")
@@ -404,12 +436,18 @@ def _compute_reco_scores(candidates, supply_lookup, predictions_lookup, start_od
         # Start odds from SorareInside
         c["_start_odds"] = slug_start_odds.get(slug)
 
+        # Price variation (7-day Limited market trend)
+        price_var = (price_variations or {}).get(slug, 0)
+        c["_price_var"] = round(price_var, 1)
+        raw_price.append(price_var)
+
     # Normalize
     norm_form = _normalize_scores(raw_form)
     norm_odds = _normalize_scores(raw_odds)
+    norm_price = _normalize_scores(raw_price)
 
     for i, c in enumerate(candidates):
-        base_score = norm_form[i] * 0.5 + norm_odds[i] * 0.5
+        base_score = norm_form[i] * 0.4 + norm_odds[i] * 0.3 + norm_price[i] * 0.3
         start_mult = _start_odds_multiplier(c["_start_odds"])
         fresh_mult = _freshness_multiplier(c.get("_latest_score_date"), reference_date)
         c["_start_mult"] = round(start_mult, 2)
@@ -801,6 +839,29 @@ if st.button("Charger", type="primary"):
 
     progress.empty()
 
+    # Fetch Limited card prices for players in supply CSV
+    price_variations = {}
+    supply = st.session_state.get("lm_supply", {})
+    if supply:
+        supply_slugs = [p.get("slug") for p in all_players if p.get("slug") in supply]
+        if supply_slugs:
+            since_iso = (selected_date - timedelta(days=14)).isoformat() + "T00:00:00Z"
+            price_progress = st.progress(0)
+            st.caption(f"Chargement des prix Limited pour {len(supply_slugs)} joueurs...")
+            batch_size = 10
+            prices_data = {}
+            for start in range(0, len(supply_slugs), batch_size):
+                batch = supply_slugs[start:start + batch_size]
+                batch_result = fetch_player_prices_batch(batch, since_iso, sorare_key)
+                prices_data.update(batch_result)
+                price_progress.progress(min((start + batch_size) / len(supply_slugs), 1.0))
+            price_progress.empty()
+            for slug, prices in prices_data.items():
+                var = _compute_price_variation(prices, selected_date)
+                if var is not None:
+                    price_variations[slug] = var
+            st.caption(f"Variation de prix calculee pour {len(price_variations)}/{len(supply_slugs)} joueurs")
+
     st.session_state["lm_injuries"] = all_injuries
     st.session_state["lm_subs"] = all_subs
     st.session_state["lm_lineups"] = all_lineups
@@ -810,6 +871,7 @@ if st.button("Charger", type="primary"):
     st.session_state["lm_predictions"] = team_predictions
     st.session_state["lm_upcoming"] = upcoming_matches
     st.session_state["lm_start_odds"] = start_odds_lookup
+    st.session_state["lm_price_variations"] = price_variations
     st.session_state["lm_loaded"] = True
 
 # ── Display tabs ────────────────────────────────────────────────────────────
@@ -1277,8 +1339,9 @@ if st.session_state.get("lm_loaded"):
 
     score_by_slug = {}
     start_odds_lookup = st.session_state.get("lm_start_odds", {})
+    price_variations = st.session_state.get("lm_price_variations", {})
     if has_supply and all_reco:
-        all_reco = _compute_reco_scores(all_reco, supply_lookup, predictions, start_odds_lookup, selected_date)
+        all_reco = _compute_reco_scores(all_reco, supply_lookup, predictions, start_odds_lookup, selected_date, price_variations)
         for c in all_reco:
             score_by_slug[c["slug"]] = c.get("_score_reco", 0)
 
@@ -1410,6 +1473,7 @@ if st.session_state.get("lm_loaded"):
             reco_rows = []
             for c in top200:
                 so = c.get("_start_odds")
+                pv = c.get("_price_var")
                 reco_rows.append({
                     "Joueur": c["player_name"],
                     "Slug": c.get("slug", ""),
@@ -1421,6 +1485,7 @@ if st.session_state.get("lm_loaded"):
                     "L40": c.get("_l40_avg", ""),
                     "Proba victoire": f"{c['_win_prob']:.0f}%" if c.get("_win_prob") else "N/A",
                     "Titulaire %": f"{so * 100:.0f}%" if so is not None else "N/A",
+                    "Var. prix 7j": f"{pv:+.1f}%" if pv else "N/A",
                     "SR supply": c.get("_sr_supply", ""),
                     "U supply": c.get("_u_supply", ""),
                     "Score reco": c.get("_score_reco", 0),
@@ -1454,6 +1519,7 @@ if st.session_state.get("lm_loaded"):
 
             def _gk_row(c):
                 so = c.get("_start_odds")
+                pv = c.get("_price_var")
                 return {
                     "Joueur": c["player_name"],
                     "Slug": c.get("slug", ""),
@@ -1465,6 +1531,7 @@ if st.session_state.get("lm_loaded"):
                     "L40": c.get("_l40_avg", ""),
                     "Proba victoire": f"{c['_win_prob']:.0f}%" if c.get("_win_prob") else "N/A",
                     "Titulaire %": f"{so * 100:.0f}%" if so is not None else "N/A",
+                    "Var. prix 7j": f"{pv:+.1f}%" if pv else "N/A",
                     "SR supply": c.get("_sr_supply", ""),
                     "U supply": c.get("_u_supply", ""),
                     "Score reco": c.get("_score_reco", 0),
