@@ -117,11 +117,12 @@ for league_name, comp_slugs in sorted(league_comps.items()):
         "Competition Sorare": league_name,
         "1er match (CET)": first_match.strftime("%a %d/%m %Hh%M"),
         "Deadline": deadline.strftime("%a %d/%m %Hh%M"),
+        "_deadline_dt": deadline,
     })
 
-rows.sort(key=lambda r: r["Deadline"])
+rows.sort(key=lambda r: r["_deadline_dt"])
 
 if rows:
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(rows).drop(columns=["_deadline_dt"]), use_container_width=True, hide_index=True)
 else:
     st.info("Aucune competition Sorare trouvee pour cette fixture.")

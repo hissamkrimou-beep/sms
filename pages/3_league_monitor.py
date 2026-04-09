@@ -29,6 +29,7 @@ BOOSTED_MIN_DELTA = 10
 REDUCED_MIN_AVG = 48
 REDUCED_MIN_DELTA = 12
 U23_PREV_WINDOW = 5
+STALENESS_DAYS = 14
 PLAYER_MATCH_WORD_RATIO = 0.5
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -190,6 +191,16 @@ def _weighted_avg(scores, n):
     # First element (most recent) gets weight 2, rest get weight 1
     weights = [2] + [1] * (len(vals) - 1)
     return sum(v * w for v, w in zip(vals, weights)) / sum(weights)
+
+
+def _parse_score_date(date_str):
+    """Parse a score date string (ISO 8601) to a date object."""
+    if not date_str:
+        return None
+    try:
+        return date.fromisoformat(date_str[:10])
+    except (ValueError, TypeError):
+        return None
 
 
 def _total_mins_l5(player):
@@ -800,6 +811,7 @@ if st.session_state.get("lm_loaded"):
     supply_lookup = st.session_state.get("lm_supply", {})
     licensed_teams = _load_json("licensed_teams.json")
     has_supply = bool(supply_lookup)
+    staleness_cutoff = selected_date - timedelta(days=STALENESS_DAYS)
     predictions = _build_predictions_lookup(raw_predictions, all_players, licensed_teams, config, overrides)
 
     # Build player lookup by team (shared across tabs)
@@ -1107,6 +1119,7 @@ if st.session_state.get("lm_loaded"):
         if len(scores) < 1:
             continue
         latest_score = scores[0]["score"]
+        latest_date = _parse_score_date(scores[0]["date"])
         if latest_score <= 0:
             continue
         prev_scores = [s["score"] for s in scores[1:U23_PREV_WINDOW + 1]]
@@ -1129,7 +1142,9 @@ if st.session_state.get("lm_loaded"):
             "Age": p.get("age", ""),
             "Position": p.get("position", ""),
             "Score": round(latest_score, 1),
+            "Dernier match": latest_date.strftime("%d/%m/%Y") if latest_date else "?",
             "_slug": slug,
+            "_recent": latest_date is not None and latest_date >= staleness_cutoff,
         })
         reco_candidates.append({
             "slug": slug,
@@ -1153,6 +1168,7 @@ if st.session_state.get("lm_loaded"):
         if not scores:
             continue
         latest = scores[0]["score"]
+        latest_date = _parse_score_date(scores[0]["date"])
         avg10 = _avg(scores, 10)
         if latest > BOOSTED_MIN_SCORE and latest >= avg10 + BOOSTED_MIN_DELTA:
             seen_boosted.add(slug)
@@ -1167,7 +1183,9 @@ if st.session_state.get("lm_loaded"):
                 "Dernier Score": round(latest, 1),
                 "Moy L10": round(avg10, 1),
                 "Delta": f"+{round(latest - avg10, 1)}",
+                "Dernier match": latest_date.strftime("%d/%m/%Y") if latest_date else "?",
                 "_slug": slug,
+                "_recent": latest_date is not None and latest_date >= staleness_cutoff,
             })
             reco_candidates.append({
                 "slug": slug,
@@ -1191,6 +1209,7 @@ if st.session_state.get("lm_loaded"):
         if not scores:
             continue
         latest = scores[0]["score"]
+        latest_date = _parse_score_date(scores[0]["date"])
         avg10 = _avg(scores, 10)
         if avg10 > REDUCED_MIN_AVG and latest <= avg10 - REDUCED_MIN_DELTA:
             seen_reduced.add(slug)
@@ -1204,6 +1223,8 @@ if st.session_state.get("lm_loaded"):
                 "Dernier Score": round(latest, 1),
                 "Moy L10": round(avg10, 1),
                 "Delta": round(latest - avg10, 1),
+                "Dernier match": latest_date.strftime("%d/%m/%Y") if latest_date else "?",
+                "_recent": latest_date is not None and latest_date >= staleness_cutoff,
             })
 
     reduced_rows.sort(key=lambda x: x["Dernier Score"])
@@ -1253,7 +1274,7 @@ if st.session_state.get("lm_loaded"):
 
     upcoming_matches = st.session_state.get("lm_upcoming", [])
 
-    tab1, tab_gk, tab3, tab4, tab5, tab_matches, tab_reco, tab_reco_gk = st.tabs([
+    tab1, tab_gk, tab3, tab4, tab5, tab_matches, tab_reco, tab_reco_gk, tab_checks = st.tabs([
         "Joueurs Blesses",
         "Goalkeepers",
         "Nouveaux U23",
@@ -1262,6 +1283,7 @@ if st.session_state.get("lm_loaded"):
         "Prochains Matchs",
         "Reco Joueurs",
         "Reco GK",
+        "Checks",
     ])
 
     # ── Tab 1: Injured Players ─────────────────────────────────────────
@@ -1306,10 +1328,13 @@ if st.session_state.get("lm_loaded"):
         if not u23_rows:
             st.info("Aucun nouveau joueur U23 detecte.")
         else:
+            n_stale = sum(1 for r in u23_rows if not r.get("_recent", True))
+            if n_stale:
+                st.warning(f"{n_stale} joueur(s) avec dernier match > {STALENESS_DAYS}j — donnees potentiellement obsoletes")
             df_u23 = pd.DataFrame(u23_rows)
             if has_supply:
                 df_u23["Score reco"] = df_u23["_slug"].map(lambda s: score_by_slug.get(s, ""))
-            df_u23 = df_u23.drop(columns=["_slug"])
+            df_u23 = df_u23.drop(columns=["_slug", "_recent"])
             st.dataframe(df_u23, use_container_width=True, hide_index=True)
 
     # ── Tab 4: Boosted Players ─────────────────────────────────────────
@@ -1318,11 +1343,14 @@ if st.session_state.get("lm_loaded"):
         if not boosted_rows:
             st.info("Aucun joueur boosted detecte.")
         else:
+            n_stale = sum(1 for r in boosted_rows if not r.get("_recent", True))
+            if n_stale:
+                st.warning(f"{n_stale} joueur(s) avec dernier match > {STALENESS_DAYS}j — donnees potentiellement obsoletes")
             st.metric("Joueurs boosted", len(boosted_rows))
             df_boosted = pd.DataFrame(boosted_rows)
             if has_supply:
                 df_boosted["Score reco"] = df_boosted["_slug"].map(lambda s: score_by_slug.get(s, ""))
-            df_boosted = df_boosted.drop(columns=["_slug"])
+            df_boosted = df_boosted.drop(columns=["_slug", "_recent"])
             st.dataframe(df_boosted, use_container_width=True, hide_index=True)
 
     # ── Tab 5: Reduced Players ─────────────────────────────────────────
@@ -1331,8 +1359,12 @@ if st.session_state.get("lm_loaded"):
         if not reduced_rows:
             st.info("Aucun joueur reduced detecte.")
         else:
+            n_stale = sum(1 for r in reduced_rows if not r.get("_recent", True))
+            if n_stale:
+                st.warning(f"{n_stale} joueur(s) avec dernier match > {STALENESS_DAYS}j — donnees potentiellement obsoletes")
             st.metric("Joueurs reduced", len(reduced_rows))
-            st.dataframe(pd.DataFrame(reduced_rows), use_container_width=True, hide_index=True)
+            df_reduced = pd.DataFrame(reduced_rows).drop(columns=["_recent"])
+            st.dataframe(df_reduced, use_container_width=True, hide_index=True)
 
     # ── Tab Matches: Prochains Matchs ────────────────────────────────────
 
@@ -1430,3 +1462,78 @@ if st.session_state.get("lm_loaded"):
 
             st.subheader(f"Tous les gardiens ({len(sorted_gk)})")
             st.dataframe(pd.DataFrame([_gk_row(c) for c in sorted_gk]), use_container_width=True, hide_index=True)
+
+    # ── Tab Checks: Sanity Checks ────────────────────────────────────
+
+    with tab_checks:
+        st.subheader("Verification des donnees")
+
+        checks = []
+
+        # 1. Config season check
+        current_year = date.today().year
+        season_issues = [cfg for cfg in selected_cfgs if cfg.get("season") and cfg["season"] != current_year]
+        if season_issues:
+            for cfg in season_issues:
+                checks.append(("warning", f"Saison {cfg['name']}", f"Configuree a {cfg['season']}, annee courante {current_year}"))
+        else:
+            checks.append(("ok", "Saisons config", f"Toutes a {current_year}"))
+
+        # 2. Players with no scores
+        n_total = len(all_players)
+        n_no_scores = sum(1 for p in all_players if not _extract_scores(p))
+        if n_no_scores > 0:
+            checks.append(("warning", "Joueurs sans scores", f"{n_no_scores}/{n_total} joueurs n'ont aucun score Sorare"))
+        else:
+            checks.append(("ok", "Scores joueurs", f"{n_total} joueurs tous avec scores"))
+
+        # 3. Win probability coverage
+        unique_teams = {p.get("_team_slug") for p in all_players if p.get("_team_slug")}
+        teams_with_pred = sum(1 for t in unique_teams if predictions.get(t, 0) > 0)
+        pct_pred = (teams_with_pred / len(unique_teams) * 100) if unique_teams else 0
+        level = "ok" if pct_pred >= 80 else "warning"
+        checks.append((level, "Probas victoire", f"{teams_with_pred}/{len(unique_teams)} equipes couvertes ({pct_pred:.0f}%)"))
+
+        # 4. Start odds coverage (SorareInside)
+        n_start_odds = len(_raw_start_odds)
+        if n_start_odds == 0:
+            checks.append(("warning", "Start odds", "Aucune donnee de titularisation chargee"))
+        else:
+            checks.append(("ok", "Start odds", f"{n_start_odds} joueurs avec proba titularisation"))
+
+        # 5. SorareInside comp_slug_map coverage
+        si_mapped = {"J1 100 Year Vision League", "K League 1", "Major League Soccer"}
+        configured_keys = [cfg["licensed_teams_key"] for cfg in selected_cfgs]
+        unmapped_si = [k for k in configured_keys if k not in si_mapped]
+        if unmapped_si:
+            checks.append(("warning", "SorareInside mapping", f"Ligues sans mapping start odds : {', '.join(unmapped_si)}"))
+        else:
+            checks.append(("ok", "SorareInside mapping", f"Toutes les ligues selectionnees sont mappees"))
+
+        # 6. Injury matching rate
+        total_inj = len(injury_rows) + len(gk_rows)
+        matched_inj = sum(1 for r in injury_rows if r.get("Slug")) + sum(1 for r in gk_rows if r.get("Slug"))
+        if total_inj > 0:
+            pct_inj = matched_inj / total_inj * 100
+            level = "ok" if pct_inj >= 80 else "warning"
+            checks.append((level, "Matching blessures", f"{matched_inj}/{total_inj} blessures matchees sur Sorare ({pct_inj:.0f}%)"))
+        else:
+            checks.append(("ok", "Matching blessures", "Aucune blessure detectee"))
+
+        # 7. Score freshness across all players
+        stale_count = 0
+        for p in all_players:
+            sc = _extract_scores(p)
+            if sc:
+                d = _parse_score_date(sc[0]["date"])
+                if d and d < staleness_cutoff:
+                    stale_count += 1
+        if stale_count > 0:
+            checks.append(("warning", "Fraicheur scores", f"{stale_count}/{n_total} joueurs avec dernier match > {STALENESS_DAYS}j"))
+        else:
+            checks.append(("ok", "Fraicheur scores", f"Tous les joueurs ont joue recemment (< {STALENESS_DAYS}j)"))
+
+        # Display all checks
+        for level, label, detail in checks:
+            icon = ":white_check_mark:" if level == "ok" else ":warning:"
+            st.markdown(f"{icon} **{label}** — {detail}")
