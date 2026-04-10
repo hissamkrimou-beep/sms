@@ -64,11 +64,11 @@ def get_licensed_teams_playing(games):
     """From a list of games, return set of licensed team slugs that are playing."""
     playing = set()
     for g in games:
-        home = g["homeTeam"]["slug"]
-        away = g["awayTeam"]["slug"]
-        if home in ALL_LICENSED_SLUGS:
+        home = (g.get("homeTeam") or {}).get("slug")
+        away = (g.get("awayTeam") or {}).get("slug")
+        if home and home in ALL_LICENSED_SLUGS:
             playing.add(home)
-        if away in ALL_LICENSED_SLUGS:
+        if away and away in ALL_LICENSED_SLUGS:
             playing.add(away)
     return playing
 
@@ -80,14 +80,17 @@ def get_licensed_teams_by_league_games(games):
     """
     teams_by_league = {}
     for g in games:
-        comp_slug = g["competition"]["slug"]
+        comp_slug = (g.get("competition") or {}).get("slug")
+        if not comp_slug:
+            continue
         league = COMP_SLUG_TO_LEAGUE.get(comp_slug)
         if not league:
             continue
         if league not in teams_by_league:
             teams_by_league[league] = set()
-        for team_slug in [g["homeTeam"]["slug"], g["awayTeam"]["slug"]]:
-            if team_slug in ALL_LICENSED_SLUGS:
+        for team in [g.get("homeTeam"), g.get("awayTeam")]:
+            team_slug = (team or {}).get("slug")
+            if team_slug and team_slug in ALL_LICENSED_SLUGS:
                 teams_by_league[league].add(team_slug)
     return teams_by_league
 
