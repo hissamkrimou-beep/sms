@@ -496,6 +496,77 @@ def generate_description(sport, mode, target, reward_per_pick, reward_total, ess
     )
 
 
+def generate_milestone_description(sport, milestones, milestone_reward_amounts, milestone_reward_type, essence_name=None, clue_currency=None, mission_type=None, competition_name=None, positions=None, age_min=None, age_max=None, club_names=None):
+    """Génère une description pour une mission avec rewards par palier de DS."""
+    # Sujet
+    if positions and len(positions) == 1:
+        pick_subject = f"a {positions[0].lower()}"
+    else:
+        pick_subject = "a player"
+
+    if mission_type == "Match spécifique" and club_names and len(club_names) > 2:
+        pick_subject += " from one of the following teams"
+
+    if age_min and age_max:
+        pick_subject += f" aged {age_min} to {age_max}"
+    elif age_max:
+        pick_subject += f" under {age_max} years old"
+    elif age_min:
+        pick_subject += f" aged {age_min} or older"
+
+    # Contexte du match
+    multi_team = club_names and len(club_names) > 2
+    if sport == "football":
+        if mission_type == "All Matches":
+            match_context = "in any match"
+        elif mission_type == "Compétition":
+            match_context = f"in today's {competition_name} matches" if competition_name else "in today's matches"
+        else:
+            match_context = "in his match" if multi_team else "in this match"
+    else:
+        match_context = "in today's game"
+
+    # Verbe + action du premier milestone pour l'intro
+    first_action = milestones[0]["stat"]
+    first_target = milestones[0]["min"]
+    if sport == "football":
+        verb = ACTION_VERBS.get(first_action, "achieves")
+    else:
+        verb = ACTION_VERBS.get(first_action, "makes")
+
+    first_label = DESCRIPTION_LABEL_OVERRIDES.get(first_action) or format_action_label(first_action, sport)
+    if first_target > 1:
+        first_label = pluralize_label(first_label)
+
+    # Reward label
+    if milestone_reward_type.lower() == "market credit":
+        reward_unit = "in market credit"
+    elif milestone_reward_type.lower() == "clues":
+        reward_unit = CLUE_LABELS.get(clue_currency, "Clue")
+    else:
+        if sport == "football" and essence_name in ("Essence", "", None):
+            reward_unit = "All-Star Essence"
+        else:
+            reward_unit = essence_name or "Essence"
+
+    # Tiers description
+    tier_parts = []
+    for i, ms in enumerate(milestones):
+        ms_label = DESCRIPTION_LABEL_OVERRIDES.get(ms["stat"]) or format_action_label(ms["stat"], sport)
+        if ms["min"] > 1:
+            ms_label = pluralize_label(ms_label)
+        amt = milestone_reward_amounts[i]
+        if milestone_reward_type.lower() == "market credit":
+            tier_parts.append(f"{ms['min']}+ {ms_label} = ${amt} {reward_unit}")
+        else:
+            tier_parts.append(f"{ms['min']}+ {ms_label} = {amt} {reward_unit}")
+
+    return (
+        f"Classic: Pick {pick_subject} who {verb} {first_target}+ {first_label} {match_context}. "
+        f"Rewards: {', '.join(tier_parts)}."
+    )
+
+
 # ── Collecte des informations ────────────────────────────────────────────────
 
 

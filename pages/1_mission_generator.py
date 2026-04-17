@@ -16,6 +16,7 @@ from generate_mission import (
     find_competition_info,
     generate_title_football,
     generate_title_nba,
+    generate_milestone_description,
     build_mission,
     build_reward,
 )
@@ -760,6 +761,23 @@ else:
                     params["max_avg_count"] = max_avg_count
 
                 mission = build_mission(params)
+
+                # Override description for milestone rewards
+                competition_names_list = params.get("competition_names", [])
+                mission["description"] = generate_milestone_description(
+                    sport=sport,
+                    milestones=milestones,
+                    milestone_reward_amounts=milestone_reward_amounts,
+                    milestone_reward_type=milestone_reward_type,
+                    essence_name=essence_name,
+                    clue_currency=milestone_clue_currency,
+                    mission_type=mission_type,
+                    competition_name=competition_names_list[0] if competition_names_list else None,
+                    positions=params.get("positions"),
+                    age_min=params.get("age_min"),
+                    age_max=params.get("age_max"),
+                    club_names=params.get("club_names"),
+                )
 
                 # Build reward with stat_thresholds (like MLB)
                 sport_upper = sport.upper()
