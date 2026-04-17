@@ -777,6 +777,7 @@ else:
                     age_min=params.get("age_min"),
                     age_max=params.get("age_max"),
                     club_names=params.get("club_names"),
+                    max_avg_score=params.get("max_avg_score"),
                 )
 
                 # Build reward with stat_thresholds (like MLB)

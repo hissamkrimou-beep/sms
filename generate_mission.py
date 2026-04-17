@@ -389,7 +389,7 @@ def generate_title_football(actions, mission_type, competition_names=None, club_
 # ── Génération de la description ─────────────────────────────────────────────
 
 
-def generate_description(sport, mode, target, reward_per_pick, reward_total, essence_name, picked_count, actions=None, mission_type=None, competition_name=None, reward_type="essence", clue_currency=None, positions=None, age_min=None, age_max=None, mc_amount=None, mc_total=None, club_names=None):
+def generate_description(sport, mode, target, reward_per_pick, reward_total, essence_name, picked_count, actions=None, mission_type=None, competition_name=None, reward_type="essence", clue_currency=None, positions=None, age_min=None, age_max=None, mc_amount=None, mc_total=None, club_names=None, max_avg_score=None):
     """Génère une description cohérente pour la mission."""
     # Déterminer le sujet selon la position
     if positions and len(positions) == 1:
@@ -408,6 +408,10 @@ def generate_description(sport, mode, target, reward_per_pick, reward_total, ess
         pick_subject += f" under {age_max} years old"
     elif age_min:
         pick_subject += f" aged {age_min} or older"
+
+    # Ajouter la contrainte L10
+    if max_avg_score:
+        pick_subject += f" with a L10 average of {max_avg_score} or less"
 
     # Reward labels
     if reward_type == "market credit":
@@ -496,7 +500,7 @@ def generate_description(sport, mode, target, reward_per_pick, reward_total, ess
     )
 
 
-def generate_milestone_description(sport, milestones, milestone_reward_amounts, milestone_reward_type, essence_name=None, clue_currency=None, mission_type=None, competition_name=None, positions=None, age_min=None, age_max=None, club_names=None):
+def generate_milestone_description(sport, milestones, milestone_reward_amounts, milestone_reward_type, essence_name=None, clue_currency=None, mission_type=None, competition_name=None, positions=None, age_min=None, age_max=None, club_names=None, max_avg_score=None):
     """Génère une description pour une mission avec rewards par palier de DS."""
     # Sujet
     if positions and len(positions) == 1:
@@ -513,6 +517,9 @@ def generate_milestone_description(sport, milestones, milestone_reward_amounts, 
         pick_subject += f" under {age_max} years old"
     elif age_min:
         pick_subject += f" aged {age_min} or older"
+
+    if max_avg_score:
+        pick_subject += f" with a L10 average of {max_avg_score} or less"
 
     # Contexte du match
     multi_team = club_names and len(club_names) > 2
@@ -828,6 +835,7 @@ def build_mission(params):
         mc_amount=params.get("mc_amount"),
         mc_total=params.get("mc_total"),
         club_names=params.get("club_names"),
+        max_avg_score=params.get("max_avg_score"),
     )
 
     mission = {
