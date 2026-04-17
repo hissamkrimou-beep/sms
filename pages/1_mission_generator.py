@@ -465,6 +465,18 @@ else:
                 clue_label_sel = st.selectbox("Type de Clue", list(sport_clues.keys()), key="fb_ms_clue_type")
                 milestone_clue_currency = sport_clues[clue_label_sel]
 
+            # When reward type changes, reset defaults via session_state
+            prev_rw_type = st.session_state.get("_fb_ms_rw_prev_type")
+            if prev_rw_type != milestone_reward_type:
+                for j in range(num_milestones):
+                    if milestone_reward_type == "Essence":
+                        st.session_state[f"fb_ms_rw_{j}"] = 50 * (j + 1)
+                    elif milestone_reward_type == "Clues":
+                        st.session_state[f"fb_ms_rw_{j}"] = j + 1
+                    else:  # Market Credit
+                        st.session_state[f"fb_ms_rw_{j}"] = 100 * (j + 1)
+                st.session_state["_fb_ms_rw_prev_type"] = milestone_reward_type
+
             st.caption("Reward par milestone")
             reward_cols = st.columns(min(num_milestones, 5))
             for i in range(num_milestones):
@@ -473,17 +485,17 @@ else:
                     if milestone_reward_type == "Market Credit":
                         amt = int(st.number_input(
                             f"MS{i + 1} ({ms_label}) — $ max",
-                            min_value=1, value=100, step=50, key=f"fb_ms_rw_{i}",
+                            min_value=1, value=100 * (i + 1), step=50, key=f"fb_ms_rw_{i}",
                         ))
                     elif milestone_reward_type == "Essence":
                         amt = int(st.number_input(
                             f"MS{i + 1} ({ms_label}) — qté",
-                            min_value=1, value=25, step=5, key=f"fb_ms_rw_{i}",
+                            min_value=1, value=50 * (i + 1), step=5, key=f"fb_ms_rw_{i}",
                         ))
                     else:
                         amt = int(st.number_input(
                             f"MS{i + 1} ({ms_label}) — qté",
-                            min_value=1, value=1, step=1, key=f"fb_ms_rw_{i}",
+                            min_value=1, value=i + 1, step=1, key=f"fb_ms_rw_{i}",
                         ))
                     milestone_reward_amounts.append(amt)
 
