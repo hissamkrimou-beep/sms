@@ -266,7 +266,7 @@ if sport == "baseball":
 
                 reward = {
                     "by_appearance": {
-                        "filter": "by_rarity",
+                        "filter": "by_stat_thresholds",
                         "stat_thresholds": stat_thresholds,
                     }
                 }
@@ -815,7 +815,7 @@ else:
 
                 reward = {
                     "by_appearance": {
-                        "filter": "by_rarity",
+                        "filter": "by_stat_thresholds",
                         "stat_thresholds": stat_thresholds,
                     }
                 }
