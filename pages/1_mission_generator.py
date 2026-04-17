@@ -403,19 +403,33 @@ else:
 
             num_milestones = int(st.number_input("Nombre de milestones", min_value=1, max_value=10, value=3, key="fb_num_ms"))
 
-            for i in range(num_milestones):
+            # Milestone 1: user picks the DS action
+            col_act1, col_min1 = st.columns([3, 1])
+            with col_act1:
+                sel1 = st.selectbox("Milestone 1 — DS", action_display, key="fb_ms_act_0")
+                ms1_action_key = action_keys[action_display.index(sel1)]
+            base_target = sport_actions[ms1_action_key]["target"]
+            with col_min1:
+                min_val1 = int(st.number_input(
+                    "Min", min_value=1, max_value=99, value=base_target, step=1, key="fb_ms_min_0",
+                ))
+            milestones.append({"stat": ms1_action_key, "min": min_val1})
+
+            # Milestones 2+: same DS action as milestone 1, target +i
+            for i in range(1, num_milestones):
                 col_act, col_min = st.columns([3, 1])
                 with col_act:
                     sel = st.selectbox(
                         f"Milestone {i + 1} — DS",
                         action_display,
+                        index=action_keys.index(ms1_action_key),
                         key=f"fb_ms_act_{i}",
                     )
                     action_key = action_keys[action_display.index(sel)]
                 with col_min:
                     min_val = int(st.number_input(
                         "Min",
-                        min_value=1, max_value=99, value=i + 1, step=1,
+                        min_value=1, max_value=99, value=base_target + i, step=1,
                         key=f"fb_ms_min_{i}",
                     ))
                 milestones.append({"stat": action_key, "min": min_val})
