@@ -410,11 +410,13 @@ else:
                 ms1_action_key = action_keys[action_display.index(sel1)]
             base_target = sport_actions[ms1_action_key]["target"]
 
-            # When MS1 action changes, propagate to MS2+ via session_state
+            # When MS1 action changes, propagate action + targets to MS2+ via session_state
             prev_ms1 = st.session_state.get("_fb_ms1_prev")
             if prev_ms1 != sel1:
+                st.session_state["fb_ms_min_0"] = base_target
                 for j in range(1, num_milestones):
                     st.session_state[f"fb_ms_act_{j}"] = sel1
+                    st.session_state[f"fb_ms_min_{j}"] = base_target + j
                 st.session_state["_fb_ms1_prev"] = sel1
 
             with col_min1:
