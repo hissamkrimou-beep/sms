@@ -411,7 +411,7 @@ def generate_description(sport, mode, target, reward_per_pick, reward_total, ess
 
     # Ajouter la contrainte L10
     if max_avg_score:
-        pick_subject += f" with a L10 average of {max_avg_score} or less"
+        pick_subject += f" with a L10 <= {max_avg_score}"
 
     # Reward labels
     if reward_type == "market credit":
@@ -519,7 +519,7 @@ def generate_milestone_description(sport, milestones, milestone_reward_amounts, 
         pick_subject += f" aged {age_min} or older"
 
     if max_avg_score:
-        pick_subject += f" with a L10 average of {max_avg_score} or less"
+        pick_subject += f" with a L10 <= {max_avg_score}"
 
     # Contexte du match
     multi_team = club_names and len(club_names) > 2
