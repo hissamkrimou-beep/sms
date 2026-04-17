@@ -376,14 +376,92 @@ else:
 
     # ── 5. Decisive actions ──────────────────────────────────────────────
     decisive_actions = []
+    use_milestones = False
+    milestones = []
+    milestone_reward_amounts = []
+    milestone_reward_type = None
+    milestone_clue_currency = None
+
     if mode == "decisive":
-        sport_actions = DECISIVE_ACTIONS[sport]
-        action_options = [
-            f"{key} — {val['label']} (target: {val['target']})"
-            for key, val in sport_actions.items()
-        ]
-        selected_options = st.multiselect("Decisive actions", action_options)
-        decisive_actions = [opt.split(" — ")[0] for opt in selected_options]
+        use_milestones = st.toggle("Reward par palier de DS (milestones)", value=False, key="fb_milestones")
+
+        if not use_milestones:
+            sport_actions = DECISIVE_ACTIONS[sport]
+            action_options = [
+                f"{key} — {val['label']} (target: {val['target']})"
+                for key, val in sport_actions.items()
+            ]
+            selected_options = st.multiselect("Decisive actions", action_options)
+            decisive_actions = [opt.split(" — ")[0] for opt in selected_options]
+        else:
+            sport_actions = DECISIVE_ACTIONS[sport]
+            action_keys = list(sport_actions.keys())
+            action_display = [f"{k} — {sport_actions[k]['label']}" for k in action_keys]
+
+            st.subheader("Milestones")
+            st.caption("Chaque milestone = 1 DS action avec un minimum à atteindre. Le target de la mission = le min du premier milestone.")
+
+            num_milestones = int(st.number_input("Nombre de milestones", min_value=1, max_value=10, value=3, key="fb_num_ms"))
+
+            for i in range(num_milestones):
+                col_act, col_min = st.columns([3, 1])
+                with col_act:
+                    sel = st.selectbox(
+                        f"Milestone {i + 1} — DS",
+                        action_display,
+                        key=f"fb_ms_act_{i}",
+                    )
+                    action_key = action_keys[action_display.index(sel)]
+                with col_min:
+                    min_val = int(st.number_input(
+                        "Min",
+                        min_value=1, max_value=99, value=i + 1, step=1,
+                        key=f"fb_ms_min_{i}",
+                    ))
+                milestones.append({"stat": action_key, "min": min_val})
+
+            # Derive decisive_actions from milestones
+            seen = set()
+            for ms in milestones:
+                if ms["stat"] not in seen:
+                    decisive_actions.append(ms["stat"])
+                    seen.add(ms["stat"])
+
+            # ── Milestone rewards ────────────────────────────────────────
+            st.subheader("Rewards par milestone")
+
+            milestone_reward_type = st.selectbox(
+                "Type de reward",
+                ["Clues", "Essence", "Market Credit"],
+                key="fb_ms_reward_type",
+            )
+
+            if milestone_reward_type == "Clues":
+                sport_clues = {label: currency for label, currency in CLUE_OPTIONS_BY_SPORT[sport]}
+                clue_label_sel = st.selectbox("Type de Clue", list(sport_clues.keys()), key="fb_ms_clue_type")
+                milestone_clue_currency = sport_clues[clue_label_sel]
+
+            st.caption("Reward par milestone")
+            reward_cols = st.columns(min(num_milestones, 5))
+            for i in range(num_milestones):
+                ms_label = ACTION_PICKER_NAMES.get(milestones[i]["stat"], milestones[i]["stat"].replace("_", " ").title())
+                with reward_cols[i % len(reward_cols)]:
+                    if milestone_reward_type == "Market Credit":
+                        amt = int(st.number_input(
+                            f"MS{i + 1} ({ms_label}) — $ max",
+                            min_value=1, value=100, step=50, key=f"fb_ms_rw_{i}",
+                        ))
+                    elif milestone_reward_type == "Essence":
+                        amt = int(st.number_input(
+                            f"MS{i + 1} ({ms_label}) — qté",
+                            min_value=1, value=25, step=5, key=f"fb_ms_rw_{i}",
+                        ))
+                    else:
+                        amt = int(st.number_input(
+                            f"MS{i + 1} ({ms_label}) — qté",
+                            min_value=1, value=1, step=1, key=f"fb_ms_rw_{i}",
+                        ))
+                    milestone_reward_amounts.append(amt)
 
     # ── 6. Titre auto-généré ─────────────────────────────────────────────
     auto_title = ""
@@ -401,13 +479,17 @@ else:
         order = int(order_val) if order_val != 0 else None
 
     # ── 8. Target ────────────────────────────────────────────────────────
-    if mode == "decisive" and decisive_actions:
-        sport_actions = DECISIVE_ACTIONS[sport]
-        default_target = sport_actions[decisive_actions[0]]["target"]
+    if use_milestones and milestones:
+        target = milestones[0]["min"]
+        st.caption(f"Target auto (milestone 1) : {target}")
     else:
-        default_target = 100
+        if mode == "decisive" and decisive_actions:
+            sport_actions = DECISIVE_ACTIONS[sport]
+            default_target = sport_actions[decisive_actions[0]]["target"]
+        else:
+            default_target = 100
 
-    target = st.number_input("Target", min_value=1, value=default_target, step=1)
+        target = st.number_input("Target", min_value=1, value=default_target, step=1)
 
     # ── 9. Picked count ──────────────────────────────────────────────────
     picked_count = st.number_input("Picked count", min_value=1, value=3, step=1)
@@ -417,23 +499,7 @@ else:
     rarities = st.multiselect("Rarities", RARITIES, default=["limited"])
 
     # ── 11. Rewards ──────────────────────────────────────────────────────
-    REWARDS_BY_RARITY = {
-        "football": {
-            "limited":    (50, 500),
-            "rare":       (50, 500),
-            "super_rare": (50, 500),
-            "unique":     (30, 250),
-        },
-        "nba": {
-            "limited":    (50, 250),
-            "rare":       (50, 250),
-            "super_rare": (50, 250),
-            "unique":     (50, 250),
-        },
-    }
-
-    reward_type = st.selectbox("Type de reward", ["essence", "clues", "market credit"])
-
+    reward_type = "essence"
     clue_currency = None
     custom_rewards = False
     mc_amount = None
@@ -443,62 +509,84 @@ else:
     mc_bonus_amount = None
     mc_bonus_duration = 30
     mc_bonus_discount_bp = 5000
-    if reward_type == "clues":
-        sport_clues = {label: currency for label, currency in CLUE_OPTIONS_BY_SPORT[sport]}
-        clue_label = st.selectbox("Type de Clue", list(sport_clues.keys()))
-        clue_currency = sport_clues[clue_label]
-    elif reward_type == "market credit":
-        MC_REWARDS_BY_RARITY = {
-            "limited":    (2, 10),
-            "rare":       (6, 30),
-            "super_rare": (25, 120),
-            "unique":     (60, 300),
-        }
-        if len(rarities) == 1:
-            default_mc_per, default_mc_total = MC_REWARDS_BY_RARITY[rarities[0]]
-        else:
-            default_mc_per, default_mc_total = 2, 10
-        col_mc1, col_mc2, col_mc3 = st.columns(3)
-        with col_mc1:
-            mc_amount = int(st.number_input("$ par pick réussi", min_value=1, value=default_mc_per, step=1, key="mc_amount"))
-        with col_mc2:
-            mc_total = int(st.number_input("$ total (all picks)", min_value=1, value=default_mc_total, step=1, key="mc_total"))
-        with col_mc3:
-            mc_discount_bp = int(st.number_input("Discount (bp)", min_value=1, max_value=10000, value=5000, step=500, key="mc_discount"))
-        mc_duration = 30
-        mc_bonus_amount = mc_total - mc_amount * int(picked_count)
-        mc_bonus_duration = mc_duration
-        mc_bonus_discount_bp = mc_discount_bp
-        if mc_bonus_amount > 0:
-            st.caption(f"${mc_amount}/pick × {int(picked_count)} picks = ${mc_amount * int(picked_count)} + ${mc_bonus_amount} bonus = ${mc_total} total — Discount: {mc_discount_bp / 100:.0f}%")
-        else:
-            st.caption(f"${mc_amount}/pick × {int(picked_count)} picks = ${mc_total} total — Discount: {mc_discount_bp / 100:.0f}%")
-        if len(rarities) > 1:
-            st.info("MC auto par rareté (L: $2/$10, R: $6/$30, SR: $25/$120, U: $60/$300)")
 
-    CLUE_REWARDS_BY_RARITY = {
-        "limited":    (2, 10),
-        "rare":       (4, 20),
-        "super_rare": (8, 40),
-        "unique":     (16, 80),
-    }
-
-    if reward_type == "market credit":
-        pass  # Config already done above
-    elif len(rarities) == 1:
-        custom_rewards = True
-        if reward_type == "clues":
-            default_per_pick = CLUE_REWARDS_BY_RARITY[rarities[0]][0]
-            default_total = CLUE_REWARDS_BY_RARITY[rarities[0]][1]
-        else:
-            default_per_pick = REWARDS_BY_RARITY[sport][rarities[0]][0]
-            default_total = REWARDS_BY_RARITY[sport][rarities[0]][1]
-        reward_per_pick = st.number_input("Reward par pick", min_value=1, value=default_per_pick, step=1)
-        reward_total = st.number_input("Reward total (0 = pas de bonus)", min_value=0, value=default_total, step=1)
-    elif reward_type == "clues":
-        st.info("Rewards clues auto par rareté (L: 2/10, R: 4/20, SR: 8/40, U: 16/80)")
+    if use_milestones:
+        st.caption("Rewards configurés dans la section Milestones ci-dessus.")
     else:
-        st.info("Rewards auto par rareté (Football: 50/500 L/R/SR, 30/250 U — NBA: 50/250 toutes)")
+
+        REWARDS_BY_RARITY = {
+            "football": {
+                "limited":    (50, 500),
+                "rare":       (50, 500),
+                "super_rare": (50, 500),
+                "unique":     (30, 250),
+            },
+            "nba": {
+                "limited":    (50, 250),
+                "rare":       (50, 250),
+                "super_rare": (50, 250),
+                "unique":     (50, 250),
+            },
+        }
+
+        reward_type = st.selectbox("Type de reward", ["essence", "clues", "market credit"])
+
+        if reward_type == "clues":
+            sport_clues = {label: currency for label, currency in CLUE_OPTIONS_BY_SPORT[sport]}
+            clue_label = st.selectbox("Type de Clue", list(sport_clues.keys()))
+            clue_currency = sport_clues[clue_label]
+        elif reward_type == "market credit":
+            MC_REWARDS_BY_RARITY = {
+                "limited":    (2, 10),
+                "rare":       (6, 30),
+                "super_rare": (25, 120),
+                "unique":     (60, 300),
+            }
+            if len(rarities) == 1:
+                default_mc_per, default_mc_total = MC_REWARDS_BY_RARITY[rarities[0]]
+            else:
+                default_mc_per, default_mc_total = 2, 10
+            col_mc1, col_mc2, col_mc3 = st.columns(3)
+            with col_mc1:
+                mc_amount = int(st.number_input("$ par pick réussi", min_value=1, value=default_mc_per, step=1, key="mc_amount"))
+            with col_mc2:
+                mc_total = int(st.number_input("$ total (all picks)", min_value=1, value=default_mc_total, step=1, key="mc_total"))
+            with col_mc3:
+                mc_discount_bp = int(st.number_input("Discount (bp)", min_value=1, max_value=10000, value=5000, step=500, key="mc_discount"))
+            mc_duration = 30
+            mc_bonus_amount = mc_total - mc_amount * int(picked_count)
+            mc_bonus_duration = mc_duration
+            mc_bonus_discount_bp = mc_discount_bp
+            if mc_bonus_amount > 0:
+                st.caption(f"${mc_amount}/pick × {int(picked_count)} picks = ${mc_amount * int(picked_count)} + ${mc_bonus_amount} bonus = ${mc_total} total — Discount: {mc_discount_bp / 100:.0f}%")
+            else:
+                st.caption(f"${mc_amount}/pick × {int(picked_count)} picks = ${mc_total} total — Discount: {mc_discount_bp / 100:.0f}%")
+            if len(rarities) > 1:
+                st.info("MC auto par rareté (L: $2/$10, R: $6/$30, SR: $25/$120, U: $60/$300)")
+
+        CLUE_REWARDS_BY_RARITY = {
+            "limited":    (2, 10),
+            "rare":       (4, 20),
+            "super_rare": (8, 40),
+            "unique":     (16, 80),
+        }
+
+        if reward_type == "market credit":
+            pass  # Config already done above
+        elif len(rarities) == 1:
+            custom_rewards = True
+            if reward_type == "clues":
+                default_per_pick = CLUE_REWARDS_BY_RARITY[rarities[0]][0]
+                default_total = CLUE_REWARDS_BY_RARITY[rarities[0]][1]
+            else:
+                default_per_pick = REWARDS_BY_RARITY[sport][rarities[0]][0]
+                default_total = REWARDS_BY_RARITY[sport][rarities[0]][1]
+            reward_per_pick = st.number_input("Reward par pick", min_value=1, value=default_per_pick, step=1)
+            reward_total = st.number_input("Reward total (0 = pas de bonus)", min_value=0, value=default_total, step=1)
+        elif reward_type == "clues":
+            st.info("Rewards clues auto par rareté (L: 2/10, R: 4/20, SR: 8/40, U: 16/80)")
+        else:
+            st.info("Rewards auto par rareté (Football: 50/500 L/R/SR, 30/250 U — NBA: 50/250 toutes)")
 
     # ── 12. Flavour ──────────────────────────────────────────────────────
     ESSENCE_FLAVOURS = {
@@ -574,6 +662,131 @@ else:
         if errors:
             for err in errors:
                 st.error(err)
+        elif use_milestones:
+            # ── Milestone-based generation (stat_thresholds) ─────────
+            for rarity in rarities:
+                rarity_label = rarity.replace("_", " ").title()
+                st.subheader(rarity_label)
+
+                # Build mission via build_mission
+                params = {
+                    "sport": sport,
+                    "mission_type": mission_type,
+                    "mode": "decisive",
+                    "title": title.strip(),
+                    "target": int(target),
+                    "picked_count": int(picked_count),
+                    "rarity": rarity,
+                    "reward_type": milestone_reward_type.lower(),
+                    "clue_currency": milestone_clue_currency,
+                    "reward_per_pick": milestone_reward_amounts[0] if milestone_reward_amounts else 0,
+                    "reward_total": sum(milestone_reward_amounts),
+                    "reward_bonus": 0,
+                    "flavour": flavour,
+                    "essence_name": essence_name,
+                    "stay_completed": stay_completed,
+                    "disable_auto_claim": disable_auto_claim,
+                    "order": order,
+                    "decisive_actions": decisive_actions,
+                    "mc_amount": milestone_reward_amounts[0] if milestone_reward_type == "Market Credit" and milestone_reward_amounts else None,
+                    "mc_total": sum(milestone_reward_amounts) if milestone_reward_type == "Market Credit" else None,
+                    "mc_duration": 30,
+                    "mc_discount_bp": 5000,
+                    "mc_bonus_amount": None,
+                    "mc_bonus_duration": 30,
+                    "mc_bonus_discount_bp": 5000,
+                }
+
+                if mission_type == "Match spécifique":
+                    if clubs:
+                        params["clubs"] = clubs
+                    if national_teams:
+                        params["national_teams"] = national_teams
+                    params["club_names"] = club_names
+
+                if mission_type == "Compétition":
+                    params["competitions"] = competitions
+                    params["competition_names"] = competition_names
+
+                if positions:
+                    params["positions"] = positions
+
+                if age_min > 0:
+                    params["age_min"] = int(age_min)
+                if age_max > 0:
+                    params["age_max"] = int(age_max)
+
+                if editions:
+                    params["editions"] = editions
+
+                if use_max_avg:
+                    params["max_avg_score"] = max_avg_score
+                    params["max_avg_count"] = max_avg_count
+
+                mission = build_mission(params)
+
+                # Build reward with stat_thresholds (like MLB)
+                sport_upper = sport.upper()
+                stat_thresholds = []
+                for i, ms in enumerate(milestones):
+                    amt = milestone_reward_amounts[i]
+
+                    if milestone_reward_type == "Market Credit":
+                        reward_config = {
+                            "conversion_credit": {
+                                "sport": sport_upper,
+                                "max_discount": {
+                                    "amounts": [{"amount": amt, "currency": "CURRENCY_USD"}],
+                                    "reference_currency": "CURRENCY_USD",
+                                },
+                                "duration_in_days": 30,
+                                "percentage_discount_basis_point": 5000,
+                            }
+                        }
+                    elif milestone_reward_type == "Essence":
+                        shard_entry = {"rarity": rarity.upper(), "quantity": amt}
+                        if flavour:
+                            shard_entry["flavour"] = flavour
+                        reward_config = {"card_shards": [shard_entry]}
+                    else:  # Clues
+                        reward_config = {
+                            "in_game_currencies": [{"amount": amt, "currency": milestone_clue_currency}]
+                        }
+
+                    stat_thresholds.append({
+                        "min": ms["min"],
+                        "stat": ms["stat"],
+                        "reward_config": reward_config,
+                    })
+
+                reward = {
+                    "by_appearance": {
+                        "filter": "by_rarity",
+                        "stat_thresholds": stat_thresholds,
+                    }
+                }
+
+                admin_payload = {
+                    "sport": sport,
+                    "periodicity": "daily",
+                    "start_date": start_date.strftime("%Y-%m-%dT%H:%M"),
+                    "end_date": end_date.strftime("%Y-%m-%dT%H:%M"),
+                    "genre": "fantasy",
+                    "config": {"config": mission},
+                    "reward_config": reward,
+                    "active": active,
+                }
+
+                col_m, col_r = st.columns(2)
+                with col_m:
+                    st.caption("mission.json")
+                    st.code(json.dumps(mission, indent=2, ensure_ascii=False), language="json")
+                with col_r:
+                    st.caption("reward.json")
+                    st.code(json.dumps(reward, indent=2, ensure_ascii=False), language="json")
+
+                with st.expander(f"Payload admin complet — {rarity_label}"):
+                    st.code(json.dumps(admin_payload, indent=2, ensure_ascii=False), language="json")
         else:
             for rarity in rarities:
                 r_mc_per = mc_amount
