@@ -409,6 +409,14 @@ else:
                 sel1 = st.selectbox("Milestone 1 — DS", action_display, key="fb_ms_act_0")
                 ms1_action_key = action_keys[action_display.index(sel1)]
             base_target = sport_actions[ms1_action_key]["target"]
+
+            # When MS1 action changes, propagate to MS2+ via session_state
+            prev_ms1 = st.session_state.get("_fb_ms1_prev")
+            if prev_ms1 != sel1:
+                for j in range(1, num_milestones):
+                    st.session_state[f"fb_ms_act_{j}"] = sel1
+                st.session_state["_fb_ms1_prev"] = sel1
+
             with col_min1:
                 min_val1 = int(st.number_input(
                     "Min", min_value=1, max_value=99, value=base_target, step=1, key="fb_ms_min_0",
