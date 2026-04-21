@@ -124,7 +124,7 @@ if sport == "baseball":
 
     mlb_reward_type = st.selectbox(
         "Type de reward",
-        ["Clues", "Essence", "Market Credit"],
+        ["Clues", "Essence", "Market Credit", "XP"],
         key="mlb_reward_type",
     )
 
@@ -151,6 +151,11 @@ if sport == "baseball":
                     f"MS{i + 1} ({short}) — qté",
                     min_value=1, value=25, step=5, key=f"mlb_rw_{i}",
                 ))
+            elif mlb_reward_type == "XP":
+                amt = int(st.number_input(
+                    f"MS{i + 1} ({short}) — XP",
+                    min_value=1, value=100, step=50, key=f"mlb_rw_{i}",
+                ))
             else:
                 amt = int(st.number_input(
                     f"MS{i + 1} ({short}) — qté",
@@ -170,6 +175,8 @@ if sport == "baseball":
         rw_suffix = f"{', '.join(rw_parts)} {clue_label}s per player"
     elif mlb_reward_type == "Market Credit":
         rw_suffix = f"${', $'.join(rw_parts)} Market Credit per player"
+    elif mlb_reward_type == "XP":
+        rw_suffix = f"{', '.join(rw_parts)} XP per player"
     else:
         rw_suffix = f"{', '.join(rw_parts)} Essence per player"
 
@@ -252,6 +259,10 @@ if sport == "baseball":
                     elif mlb_reward_type == "Essence":
                         reward_config = {
                             "card_shards": [{"rarity": rarity.upper(), "quantity": amt}]
+                        }
+                    elif mlb_reward_type == "XP":
+                        reward_config = {
+                            "in_game_currencies": [{"amount": amt, "currency": f"{rarity.upper()}_XP"}]
                         }
                     else:  # Clues
                         reward_config = {
