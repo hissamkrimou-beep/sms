@@ -40,7 +40,7 @@
   "cross_league": {
     "Champions": {
       "leagues": ["Premier League", "LALIGA EA Sports", "Bundesliga", "Ligue 1"],
-      "thresholds": { "cat1": [10, 29], "cat2": [30, 49], "cat3": [50, 69], "cat4": [70, null] }
+      "thresholds": { "cat1": [10, 19], "cat2": [20, 37], "cat3": [38, 56], "cat4": [57, null] }
     },
     "Challengers": {
       "leagues": ["Austrian Bundesliga", "Danish Superliga", "Primeira Liga", "Scottish Premiership", "Süper Lig"],
