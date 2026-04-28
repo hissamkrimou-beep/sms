@@ -26,6 +26,7 @@ DECISIVE_ACTIONS = load_json("decisive_actions.json")
 FOOTBALL_CLUBS = load_json("football_clubs.json")
 FOOTBALL_COMPETITIONS = load_json("football_competitions.json")
 NBA_TEAMS = load_json("nba_teams.json")
+MLB_TEAMS = load_json("mlb_teams.json")
 
 # ── Constantes ───────────────────────────────────────────────────────────────
 
@@ -299,6 +300,12 @@ def find_team_info(query, sport):
     """Trouve le slug et le nom d'une équipe à partir d'un nom/alias. Retourne (slug, name, is_national)."""
     if sport == "nba":
         result = fuzzy_search(query, NBA_TEAMS)
+        if result:
+            return result["slug"], result["name"], False
+        return None, None, False
+
+    if sport in ("mlb", "baseball"):
+        result = fuzzy_search(query, MLB_TEAMS)
         if result:
             return result["slug"], result["name"], False
         return None, None, False
