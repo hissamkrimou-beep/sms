@@ -1,4 +1,358 @@
 {
+  "fifa-world-cup": [
+    {
+      "name": "Algeria",
+      "slug": "algeria",
+      "aliases": [
+        "algeria"
+      ]
+    },
+    {
+      "name": "Argentina",
+      "slug": "argentina",
+      "aliases": [
+        "argentina"
+      ]
+    },
+    {
+      "name": "Australia",
+      "slug": "australia",
+      "aliases": [
+        "australia"
+      ]
+    },
+    {
+      "name": "Austria",
+      "slug": "austria",
+      "aliases": [
+        "austria"
+      ]
+    },
+    {
+      "name": "Belgium",
+      "slug": "belgium",
+      "aliases": [
+        "belgium"
+      ]
+    },
+    {
+      "name": "Bosnia & Herzegovina",
+      "slug": "bosnia-herzegovina",
+      "aliases": [
+        "bosnia",
+        "bosnia and herzegovina",
+        "bosnia & herzegovina"
+      ]
+    },
+    {
+      "name": "Brazil",
+      "slug": "brazil",
+      "aliases": [
+        "brazil"
+      ]
+    },
+    {
+      "name": "Canada",
+      "slug": "canada",
+      "aliases": [
+        "canada"
+      ]
+    },
+    {
+      "name": "Cape Verde",
+      "slug": "cape-verde-islands",
+      "aliases": [
+        "cape verde",
+        "cabo verde"
+      ]
+    },
+    {
+      "name": "Colombia",
+      "slug": "colombia",
+      "aliases": [
+        "colombia"
+      ]
+    },
+    {
+      "name": "Congo - Kinshasa",
+      "slug": "congo-dr",
+      "aliases": [
+        "dr congo",
+        "congo - kinshasa",
+        "congo dr",
+        "drc"
+      ]
+    },
+    {
+      "name": "Croatia",
+      "slug": "croatia",
+      "aliases": [
+        "croatia"
+      ]
+    },
+    {
+      "name": "Curaçao",
+      "slug": "curacao",
+      "aliases": [
+        "curaçao"
+      ]
+    },
+    {
+      "name": "Czechia",
+      "slug": "czech-republic",
+      "aliases": [
+        "czechia",
+        "czech republic"
+      ]
+    },
+    {
+      "name": "Côte d’Ivoire",
+      "slug": "cote-d-ivoire",
+      "aliases": [
+        "côte d’ivoire",
+        "cote d'ivoire",
+        "ivory coast",
+        "côte d'ivoire",
+        "cote divoire"
+      ]
+    },
+    {
+      "name": "Ecuador",
+      "slug": "ecuador",
+      "aliases": [
+        "ecuador"
+      ]
+    },
+    {
+      "name": "Egypt",
+      "slug": "egypt",
+      "aliases": [
+        "egypt"
+      ]
+    },
+    {
+      "name": "England",
+      "slug": "england",
+      "aliases": [
+        "england"
+      ]
+    },
+    {
+      "name": "France",
+      "slug": "france",
+      "aliases": [
+        "france"
+      ]
+    },
+    {
+      "name": "Germany",
+      "slug": "germany",
+      "aliases": [
+        "germany"
+      ]
+    },
+    {
+      "name": "Ghana",
+      "slug": "ghana",
+      "aliases": [
+        "ghana"
+      ]
+    },
+    {
+      "name": "Haiti",
+      "slug": "haiti",
+      "aliases": [
+        "haiti"
+      ]
+    },
+    {
+      "name": "Iran",
+      "slug": "iran",
+      "aliases": [
+        "iran"
+      ]
+    },
+    {
+      "name": "Iraq",
+      "slug": "iraq",
+      "aliases": [
+        "iraq"
+      ]
+    },
+    {
+      "name": "Japan",
+      "slug": "japan",
+      "aliases": [
+        "japan"
+      ]
+    },
+    {
+      "name": "Jordan",
+      "slug": "jordan",
+      "aliases": [
+        "jordan"
+      ]
+    },
+    {
+      "name": "South Korea",
+      "slug": "korea-republic",
+      "aliases": [
+        "south korea",
+        "korea republic",
+        "korea"
+      ]
+    },
+    {
+      "name": "Mexico",
+      "slug": "mexico",
+      "aliases": [
+        "mexico"
+      ]
+    },
+    {
+      "name": "Morocco",
+      "slug": "morocco",
+      "aliases": [
+        "morocco"
+      ]
+    },
+    {
+      "name": "Netherlands",
+      "slug": "netherlands",
+      "aliases": [
+        "netherlands"
+      ]
+    },
+    {
+      "name": "New Zealand",
+      "slug": "new-zealand",
+      "aliases": [
+        "new zealand"
+      ]
+    },
+    {
+      "name": "Norway",
+      "slug": "norway",
+      "aliases": [
+        "norway"
+      ]
+    },
+    {
+      "name": "Panama",
+      "slug": "panama",
+      "aliases": [
+        "panama"
+      ]
+    },
+    {
+      "name": "Paraguay",
+      "slug": "paraguay",
+      "aliases": [
+        "paraguay"
+      ]
+    },
+    {
+      "name": "Portugal",
+      "slug": "portugal",
+      "aliases": [
+        "portugal"
+      ]
+    },
+    {
+      "name": "Qatar",
+      "slug": "qatar",
+      "aliases": [
+        "qatar"
+      ]
+    },
+    {
+      "name": "Saudi Arabia",
+      "slug": "saudi-arabia",
+      "aliases": [
+        "saudi arabia"
+      ]
+    },
+    {
+      "name": "Scotland",
+      "slug": "scotland",
+      "aliases": [
+        "scotland"
+      ]
+    },
+    {
+      "name": "Senegal",
+      "slug": "senegal",
+      "aliases": [
+        "senegal"
+      ]
+    },
+    {
+      "name": "South Africa",
+      "slug": "south-africa",
+      "aliases": [
+        "south africa"
+      ]
+    },
+    {
+      "name": "Spain",
+      "slug": "spain",
+      "aliases": [
+        "spain"
+      ]
+    },
+    {
+      "name": "Sweden",
+      "slug": "sweden",
+      "aliases": [
+        "sweden"
+      ]
+    },
+    {
+      "name": "Switzerland",
+      "slug": "switzerland",
+      "aliases": [
+        "switzerland"
+      ]
+    },
+    {
+      "name": "Tunisia",
+      "slug": "tunisia",
+      "aliases": [
+        "tunisia"
+      ]
+    },
+    {
+      "name": "Turkey",
+      "slug": "turkey",
+      "aliases": [
+        "turkey"
+      ]
+    },
+    {
+      "name": "United States",
+      "slug": "united-states",
+      "aliases": [
+        "usa",
+        "united states",
+        "us",
+        "états-unis"
+      ]
+    },
+    {
+      "name": "Uruguay",
+      "slug": "uruguay",
+      "aliases": [
+        "uruguay"
+      ]
+    },
+    {
+      "name": "Uzbekistan",
+      "slug": "uzbekistan",
+      "aliases": [
+        "uzbekistan"
+      ]
+    }
+  ],
   "1-hnl": [
     {
       "name": "GNK Dinamo Zagreb",

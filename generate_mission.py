@@ -290,6 +290,7 @@ def fuzzy_search(query, items, key="name"):
 
 
 NATIONAL_TEAM_COMPETITIONS = {
+    "fifa-world-cup",
     "fifa-world-cup-qualification-europe",
     "fifa-world-cup-qualification-south-america",
     "fifa-world-cup-qualification-intercontinental",
