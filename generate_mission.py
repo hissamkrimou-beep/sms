@@ -290,7 +290,7 @@ def fuzzy_search(query, items, key="name"):
 
 
 NATIONAL_TEAM_COMPETITIONS = {
-    "fifa-world-cup",
+    "world-cup",
     "fifa-world-cup-qualification-europe",
     "fifa-world-cup-qualification-south-america",
     "fifa-world-cup-qualification-intercontinental",
@@ -756,10 +756,8 @@ def collect_inputs():
         chosen_idx = labels.index(chosen)
         params["clue_currency"] = clue_options[chosen_idx][1]
 
-        params["reward_per_pick"] = ask_int("Clues par pick réussi", default=16)
-        default_bonus = params["reward_per_pick"] * params["picked_count"]
-        total_max = params["reward_per_pick"] * params["picked_count"] + default_bonus
-        params["reward_total"] = ask_int("Clues TOTAL si tous les picks réussis", default=total_max)
+        params["reward_per_pick"] = ask_int("Clues par pick réussi", default=2)
+        params["reward_total"] = ask_int("Clues TOTAL si tous les picks réussis", default=10)
     else:
         params["clue_currency"] = None
         params["reward_per_pick"] = ask_int("Reward par pick réussi (en Essence)", default=50)
@@ -814,6 +812,7 @@ def collect_inputs():
     print("\n--- Options avancées ---")
     params["stay_completed"] = ask_yes_no("stay_completed_at_expiration ?", default=True)
     params["disable_auto_claim"] = ask_yes_no("disable_auto_claim_at_expiration ?", default=True)
+    params["prevent_concurrent_picks"] = ask_yes_no("prevent_concurrent_picks ?", default=False)
 
     return params
 
@@ -855,7 +854,7 @@ def build_mission(params):
         "description": description,
         "picked_count": params["picked_count"],
         "max_player_occurence": 1,
-        "prevent_concurrent_picks": True,
+        "prevent_concurrent_picks": params.get("prevent_concurrent_picks", False),
         "stay_completed_at_expiration": params["stay_completed"],
         "disable_auto_claim_at_expiration": params["disable_auto_claim"],
     }
@@ -962,7 +961,8 @@ def build_reward(params):
             }
         reward = {"by_appearance": by_appearance}
     elif reward_type == "clues":
-        currency = params.get("clue_currency", "BEST_STAR_RANK_CRAFT_CLUE")
+        base_currency = params.get("clue_currency") or "BEST_STAR_RANK_CRAFT_CLUE"
+        currency = f"{params['rarity'].upper()}_{base_currency}"
         by_appearance = {
             "filter": "by_rarity",
             "in_game_currencies": [

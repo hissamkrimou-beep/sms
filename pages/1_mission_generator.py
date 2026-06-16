@@ -184,6 +184,10 @@ if sport == "baseball":
     st.session_state["mlb_desc"] = auto_desc
     description = st.text_input("Description", key="mlb_desc")
 
+    # ── Options avancées ─────────────────────────────────────────────────
+    with st.expander("Options avancées"):
+        mlb_prevent_concurrent_picks = st.toggle("prevent_concurrent_picks", value=False, key="mlb_prevent_concurrent")
+
     # ── Generate ─────────────────────────────────────────────────────────
     st.divider()
 
@@ -223,7 +227,7 @@ if sport == "baseball":
                 "picked_count": picked_count,
                 "decisive_actions": decisive_actions,
                 "max_player_occurence": 1,
-                "prevent_concurrent_picks": True,
+                "prevent_concurrent_picks": mlb_prevent_concurrent_picks,
                 "stay_completed_at_expiration": True,
                 "allow_multiple_games_per_appearance": True,
             }
@@ -266,7 +270,7 @@ if sport == "baseball":
                         }
                     else:  # Clues
                         reward_config = {
-                            "in_game_currencies": [{"amount": amt, "currency": mlb_clue_currency}]
+                            "in_game_currencies": [{"amount": amt, "currency": f"{rarity.upper()}_{mlb_clue_currency}"}]
                         }
 
                     stat_thresholds.append({
@@ -614,9 +618,9 @@ else:
 
         CLUE_REWARDS_BY_RARITY = {
             "limited":    (2, 10),
-            "rare":       (4, 20),
-            "super_rare": (8, 40),
-            "unique":     (16, 80),
+            "rare":       (2, 10),
+            "super_rare": (2, 10),
+            "unique":     (2, 10),
         }
 
         if reward_type == "market credit":
@@ -632,7 +636,7 @@ else:
             reward_per_pick = st.number_input("Reward par pick", min_value=1, value=default_per_pick, step=1)
             reward_total = st.number_input("Reward total (0 = pas de bonus)", min_value=0, value=default_total, step=1)
         elif reward_type == "clues":
-            st.info("Rewards clues auto par rareté (L: 2/10, R: 4/20, SR: 8/40, U: 16/80)")
+            st.info("Rewards clues : 2/pick, 10 total par rareté")
         else:
             st.info("Rewards auto par rareté (Football: 50/500 L/R/SR, 30/250 U — NBA: 50/250 toutes)")
 
@@ -691,6 +695,7 @@ else:
     with st.expander("Options avancées"):
         stay_completed = st.toggle("stay_completed_at_expiration", value=True)
         disable_auto_claim = st.toggle("disable_auto_claim_at_expiration", value=True)
+        prevent_concurrent_picks = st.toggle("prevent_concurrent_picks", value=False)
         active = st.toggle("Active", value=True)
 
     # ── Bouton Générer ───────────────────────────────────────────────────
@@ -734,6 +739,7 @@ else:
                     "essence_name": essence_name,
                     "stay_completed": stay_completed,
                     "disable_auto_claim": disable_auto_claim,
+                    "prevent_concurrent_picks": prevent_concurrent_picks,
                     "order": order,
                     "decisive_actions": decisive_actions,
                     "mc_amount": milestone_reward_amounts[0] if milestone_reward_type == "Market Credit" and milestone_reward_amounts else None,
@@ -816,7 +822,7 @@ else:
                         reward_config = {"card_shards": [shard_entry]}
                     else:  # Clues
                         reward_config = {
-                            "in_game_currencies": [{"amount": amt, "currency": milestone_clue_currency}]
+                            "in_game_currencies": [{"amount": amt, "currency": f"{rarity.upper()}_{milestone_clue_currency}"}]
                         }
 
                     stat_thresholds.append({
@@ -891,6 +897,7 @@ else:
                     "essence_name": essence_name,
                     "stay_completed": stay_completed,
                     "disable_auto_claim": disable_auto_claim,
+                    "prevent_concurrent_picks": prevent_concurrent_picks,
                     "order": order,
                     "mc_amount": r_mc_per if reward_type == "market credit" else mc_amount,
                     "mc_total": r_mc_total if reward_type == "market credit" else None,

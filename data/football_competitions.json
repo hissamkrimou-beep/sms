@@ -22,7 +22,7 @@
   { "name": "Eliteserien", "slug": "eliteserien-no", "aliases": ["eliteserien", "norway", "norvege"] },
   { "name": "SuperSport HNL", "slug": "1-hnl", "aliases": ["hnl", "croatia", "croatie", "supersport hnl"] },
   { "name": "Superliga Argentina", "slug": "superliga-argentina-de-futbol", "aliases": ["superliga argentina", "argentina", "liga argentina", "liga profesional"] },
-  { "name": "FIFA World Cup", "slug": "fifa-world-cup", "aliases": ["world cup", "fifa world cup", "wc", "cdm", "coupe du monde", "mundial", "global cup"] },
+  { "name": "FIFA World Cup", "slug": "world-cup", "aliases": ["world cup", "fifa world cup", "wc", "cdm", "coupe du monde", "mundial", "global cup"] },
   { "name": "WCQ Europe", "slug": "fifa-world-cup-qualification-europe", "aliases": ["wcq europe", "world cup qualifiers europe", "qualifs cdm europe", "barrages europe"] },
   { "name": "WCQ South America", "slug": "fifa-world-cup-qualification-south-america", "aliases": ["wcq south america", "world cup qualifiers south america", "qualifs cdm amerique du sud", "eliminatorias"] },
   { "name": "WCQ Intercontinental", "slug": "fifa-world-cup-qualification-intercontinental", "aliases": ["wcq intercontinental", "barrages intercontinentaux", "intercontinental playoffs"] }
