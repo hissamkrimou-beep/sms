@@ -38,10 +38,16 @@ COMP_SLUG_TO_LEAGUE = {
     "ligue-1-fr": "Ligue 1",
     "serie-a-it": "Serie A",
     "mlspa": "Major League Soccer",
+    # J1: games used "j1-100-year-vision-league" until the calendar-year era; the
+    # 2026-27 autumn-spring season switched the game slug to "j1-league".
     "j1-100-year-vision-league": "J1 100 Year Vision League",
+    "j1-league": "J1 100 Year Vision League",
     "k-league-1": "K League 1",
     "jupiler-pro-league": "Jupiler Pro League",
     "eredivisie": "VriendenLoterij Eredivisie",
+    # Austrian league games use "austrian-bundesliga" (not the competition-entity
+    # slug "bundesliga-at"); keep both so counting never misses it.
+    "austrian-bundesliga": "Austrian Bundesliga",
     "bundesliga-at": "Austrian Bundesliga",
     "superliga-dk": "Danish Superliga",
     "primeira-liga-pt": "Primeira Liga",
@@ -52,6 +58,9 @@ COMP_SLUG_TO_LEAGUE = {
     "eliteserien-no": "Eliteserien",
     "1-hnl": "SuperSport HNL",
     "football-league-championship": "English Second Division",
+    # Only the licensed Argentine clubs (River, Vélez, Argentinos) are tracked;
+    # Sorare's Contenders/Rest of the World leaderboards include the full league.
+    "superliga-argentina-de-futbol": "Superliga Argentina",
 }
 
 

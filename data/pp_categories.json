@@ -55,11 +55,11 @@
       "thresholds": { "cat1": [10, 29], "cat2": [30, 49], "cat3": [50, 69], "cat4": [70, null] }
     },
     "Contenders": {
-      "leagues": ["2. Bundesliga", "Ligue 2 BKT", "SuperSport HNL", "Austrian Bundesliga"],
+      "leagues": ["2. Bundesliga", "Ligue 2 BKT", "SuperSport HNL", "Austrian Bundesliga", "Superliga Argentina"],
       "thresholds": { "cat2": [10, 17], "cat3": [18, 25], "cat4": [26, null] }
     },
     "Rest of the World": {
-      "leagues": ["J1 100 Year Vision League", "Scottish Premiership", "2. Bundesliga", "Ligue 2 BKT", "SuperSport HNL", "Austrian Bundesliga", "English Second Division"],
+      "leagues": ["J1 100 Year Vision League", "Scottish Premiership", "2. Bundesliga", "Ligue 2 BKT", "SuperSport HNL", "Austrian Bundesliga", "English Second Division", "Superliga Argentina"],
       "thresholds": { "cat1": [10, 22], "cat2": [23, 45], "cat3": [46, 69], "cat4": [70, null] }
     },
     "U23": {
