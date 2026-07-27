@@ -2,7 +2,11 @@
   "standalone": {
     "Premier League": {
       "leagues": ["Premier League"],
-      "thresholds": { "cat3": [10, 16], "cat4": [17, null] }
+      "thresholds": { "cat3": [10, 15], "cat4": [16, null] }
+    },
+    "J-League": {
+      "leagues": ["J1 100 Year Vision League"],
+      "thresholds": { "cat3": [10, 15], "cat4": [16, null] }
     },
     "LaLiga": {
       "leagues": ["LALIGA EA Sports"],
@@ -10,51 +14,59 @@
     },
     "Bundesliga": {
       "leagues": ["Bundesliga"],
-      "thresholds": { "cat3": [10, 14], "cat4": [15, null] }
+      "thresholds": { "cat3": [9, 14], "cat4": [15, null] }
     },
     "Ligue 1": {
       "leagues": ["Ligue 1"],
-      "thresholds": { "cat3": [10, 14], "cat4": [15, null] }
-    },
-    "MLS": {
-      "leagues": ["Major League Soccer"],
-      "thresholds": { "cat3": [10, 22], "cat4": [23, null] }
-    },
-    "J-League": {
-      "leagues": ["J1 100 Year Vision League"],
-      "thresholds": { "cat3": [10, 15], "cat4": [16, null] }
-    },
-    "K-League": {
-      "leagues": ["K League 1"],
-      "thresholds": { "cat3": [10, 10], "cat4": [11, null] }
-    },
-    "Jupiler": {
-      "leagues": ["Jupiler Pro League"],
-      "thresholds": { "cat3": [10, 13], "cat4": [14, null] }
+      "thresholds": { "cat3": [9, 14], "cat4": [15, null] }
     },
     "Eredivisie": {
       "leagues": ["VriendenLoterij Eredivisie"],
-      "thresholds": { "cat3": [10, 14], "cat4": [15, null] }
+      "thresholds": { "cat3": [9, 14], "cat4": [15, null] }
+    },
+    "Primeira Liga": {
+      "leagues": ["Primeira Liga"],
+      "thresholds": { "cat3": [9, 14], "cat4": [15, null] }
+    },
+    "K-League": {
+      "leagues": ["K League 1"],
+      "thresholds": { "cat3": [6, 9], "cat4": [10, null] }
+    },
+    "Scottish Premiership": {
+      "leagues": ["Scottish Premiership"],
+      "thresholds": { "cat3": [6, 9], "cat4": [10, null] }
+    },
+    "MLS": {
+      "leagues": ["Major League Soccer"],
+      "thresholds": { "cat2": [10, 15], "cat3": [16, 23], "cat4": [24, null] }
+    },
+    "JPL": {
+      "leagues": ["Jupiler Pro League"],
+      "thresholds": { "cat3": [9, 14], "cat4": [15, null] }
+    },
+    "English Second Division": {
+      "leagues": ["English Second Division"],
+      "thresholds": { "cat2": [10, 11], "cat3": [12, 17], "cat4": [18, null] }
     }
   },
   "cross_league": {
     "Champions": {
       "leagues": ["Premier League", "LALIGA EA Sports", "Bundesliga", "Ligue 1"],
-      "thresholds": { "cat1": [10, 19], "cat2": [20, 37], "cat3": [38, 56], "cat4": [57, null] }
-    },
-    "Challengers": {
-      "leagues": ["Austrian Bundesliga", "Danish Superliga", "Primeira Liga", "Scottish Premiership", "Süper Lig"],
-      "thresholds": { "cat2": [10, 18], "cat3": [19, 27], "cat4": [28, null] }
+      "thresholds": { "cat1": [10, 29], "cat2": [30, 49], "cat3": [50, 69], "cat4": [70, null] }
     },
     "Contenders": {
-      "leagues": ["2. Bundesliga", "Ligue 2 BKT", "Eliteserien", "SuperSport HNL"],
-      "thresholds": { "cat1": [10, 18], "cat2": [19, 27], "cat3": [28, 54], "cat4": [55, null] }
+      "leagues": ["2. Bundesliga", "Ligue 2 BKT", "SuperSport HNL", "Austrian Bundesliga"],
+      "thresholds": { "cat2": [10, 17], "cat3": [18, 25], "cat4": [26, null] }
     },
-    "All-Star": {
+    "Rest of the World": {
+      "leagues": ["J1 100 Year Vision League", "Scottish Premiership", "2. Bundesliga", "Ligue 2 BKT", "SuperSport HNL", "Austrian Bundesliga", "English Second Division"],
+      "thresholds": { "cat1": [10, 22], "cat2": [23, 45], "cat3": [46, 69], "cat4": [70, null] }
+    },
+    "U23": {
       "leagues": ["ALL"],
       "thresholds": { "cat1": [10, 50], "cat2": [51, 125], "cat3": [126, 200], "cat4": [201, null] }
     },
-    "U23": {
+    "Global": {
       "leagues": ["ALL"],
       "thresholds": { "cat1": [10, 50], "cat2": [51, 125], "cat3": [126, 200], "cat4": [201, null] }
     }

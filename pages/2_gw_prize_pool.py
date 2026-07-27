@@ -30,12 +30,6 @@ ALL_LICENSED_SLUGS = set()
 for slugs in LICENSED_TEAMS.values():
     ALL_LICENSED_SLUGS.update(slugs)
 
-# Build league lookup: team slug -> league name
-SLUG_TO_LEAGUE = {}
-for league, slugs in LICENSED_TEAMS.items():
-    for s in slugs:
-        SLUG_TO_LEAGUE[s] = league
-
 # Map API competition slugs to our league names (must match keys in licensed_teams.json)
 COMP_SLUG_TO_LEAGUE = {
     "premier-league-gb-eng": "Premier League",
@@ -57,6 +51,7 @@ COMP_SLUG_TO_LEAGUE = {
     "ligue-2-fr": "Ligue 2 BKT",
     "eliteserien-no": "Eliteserien",
     "1-hnl": "SuperSport HNL",
+    "football-league-championship": "English Second Division",
 }
 
 
@@ -103,16 +98,20 @@ def count_standalone(teams_by_league, comp_config):
     return count
 
 
-def count_cross_league(all_playing, comp_config):
-    """Count licensed teams from relevant leagues playing ANY match."""
+def count_cross_league(all_playing, teams_by_league, comp_config):
+    """Count licensed teams for a cross-league competition.
+
+    ALL-based competitions (All-Star / Global, U23) count every licensed team
+    playing ANY match. Other cross-league competitions (Champions, Contenders,
+    Rest of the World) only count teams playing a match in their own domestic
+    league, like standalone competitions.
+    """
     leagues = comp_config["leagues"]
     if leagues == ["ALL"]:
         return len(all_playing)
     count = 0
-    for slug in all_playing:
-        league = SLUG_TO_LEAGUE.get(slug)
-        if league and league in leagues:
-            count += 1
+    for league in leagues:
+        count += len(teams_by_league.get(league, set()))
     return count
 
 
@@ -120,7 +119,11 @@ def determine_category(count, thresholds, comp_config):
     """Determine the prize pool category based on team count and thresholds.
 
     Returns (category_name, status) where status is 'OPEN' or 'CLOSED'.
-    Applies the 50% rule when count < 10.
+
+    Opening rule: a competition is OPEN when at least 10 licensed teams play,
+    OR when at least 50% of its total licensed teams play if that half is below
+    10 (small competitions open below 10). Once open, the category is read from
+    the threshold ranges, which may include sub-10 ranges for small competitions.
     """
     # Count total licensed teams for this competition
     leagues = comp_config["leagues"]
@@ -131,26 +134,27 @@ def determine_category(count, thresholds, comp_config):
         for league in leagues:
             total_licensed += len(LICENSED_TEAMS.get(league, []))
 
-    # Rule 1: >= 10 teams playing
-    if count >= 10:
-        for cat_name in ["cat4", "cat3", "cat2", "cat1"]:
-            if cat_name not in thresholds:
-                continue
-            low, high = thresholds[cat_name]
-            if high is None and count >= low:
-                return cat_name.upper(), "OPEN"
-            if high is not None and low <= count <= high:
-                return cat_name.upper(), "OPEN"
-        # Fallback: lowest category
-        lowest = sorted(thresholds.keys())[0]
-        return lowest.upper(), "OPEN"
+    # Opening minimum: 10, unless 50% of the pool is smaller (small competitions)
+    opening_min = 10
+    if total_licensed > 0 and total_licensed * 0.5 < 10:
+        opening_min = total_licensed * 0.5
 
-    # Rule 2: 50% rule - if >= 50% of total licensed teams play
-    if total_licensed > 0 and count >= total_licensed * 0.5:
-        lowest = sorted(thresholds.keys())[0]
-        return lowest.upper(), "OPEN"
+    if count <= 0 or count < opening_min:
+        return "-", "CLOSED"
 
-    return "-", "CLOSED"
+    # Open: read the category from the threshold ranges (highest first)
+    for cat_name in ["cat4", "cat3", "cat2", "cat1"]:
+        if cat_name not in thresholds:
+            continue
+        low, high = thresholds[cat_name]
+        if high is None and count >= low:
+            return cat_name.upper(), "OPEN"
+        if high is not None and low <= count <= high:
+            return cat_name.upper(), "OPEN"
+
+    # Open but below the lowest defined range: fall back to the lowest category
+    lowest = sorted(thresholds.keys())[0]
+    return lowest.upper(), "OPEN"
 
 
 # ── UI ───────────────────────────────────────────────────────────────────────
@@ -412,7 +416,7 @@ for comp_type in ["standalone", "cross_league"]:
         if comp_type == "standalone":
             count = count_standalone(teams_by_league, comp_config)
         else:
-            count = count_cross_league(all_playing, comp_config)
+            count = count_cross_league(all_playing, teams_by_league, comp_config)
         cat, status = determine_category(count, comp_config["thresholds"], comp_config)
         results.append({
             "Competition": comp_name,
