@@ -113,10 +113,12 @@ for league_name, comp_slugs in sorted(league_comps.items()):
         continue
     cycle_day = _cycle_start_day(first_match)
     deadline = _compute_deadline(first_match, cycle_day)
+    proposed = first_match - timedelta(hours=1, minutes=30)
     rows.append({
         "Competition Sorare": league_name,
         "1er match (CET)": first_match.strftime("%a %d/%m %Hh%M"),
         "Deadline": deadline.strftime("%a %d/%m %Hh%M"),
+        "Proposition (-1h30)": proposed.strftime("%a %d/%m %Hh%M"),
         "_deadline_dt": deadline,
     })
 
