@@ -432,6 +432,9 @@ def generate_description(sport, mode, target, reward_per_pick, reward_total, ess
         clue_label = CLUE_LABELS.get(clue_currency, "Clue")
         reward_label = clue_label + ("s" if reward_per_pick > 1 else "")
         reward_label_total = clue_label + ("s" if reward_total > 1 else "")
+    elif reward_type == "xp":
+        reward_label = "XP"
+        reward_label_total = "XP"
     else:
         # En football, utiliser "All-Star Essence" si l'essence n'est pas précisée
         if sport == "football" and essence_name in ("Essence", ""):
@@ -558,6 +561,8 @@ def generate_milestone_description(sport, milestones, milestone_reward_amounts, 
         reward_unit = "in market credit"
     elif milestone_reward_type.lower() == "clues":
         reward_unit = CLUE_LABELS.get(clue_currency, "Clue")
+    elif milestone_reward_type.lower() == "xp":
+        reward_unit = "XP"
     else:
         if sport == "football" and essence_name in ("Essence", "", None):
             reward_unit = "All-Star Essence"
@@ -746,10 +751,16 @@ def collect_inputs():
     # 9. Rewards
     params["reward_type"] = ask_choice(
         "Type de reward ?",
-        ["essence", "clues"],
+        ["essence", "clues", "xp"],
     )
 
-    if params["reward_type"] == "clues":
+    if params["reward_type"] == "xp":
+        params["clue_currency"] = None
+        params["reward_per_pick"] = ask_int("XP par pick réussi", default=300)
+        default_bonus = params["reward_per_pick"] * params["picked_count"]
+        total_max = params["reward_per_pick"] * params["picked_count"] + default_bonus
+        params["reward_total"] = ask_int("XP TOTAL si tous les picks réussis", default=total_max)
+    elif params["reward_type"] == "clues":
         clue_options = CLUE_OPTIONS_BY_SPORT[params["sport"]]
         labels = [f"{label} ({currency})" for label, currency in clue_options]
         chosen = ask_choice("Type de Clue ?", labels)
@@ -960,8 +971,11 @@ def build_reward(params):
                 },
             }
         reward = {"by_appearance": by_appearance}
-    elif reward_type == "clues":
-        base_currency = params.get("clue_currency") or "BEST_STAR_RANK_CRAFT_CLUE"
+    elif reward_type in ("clues", "xp"):
+        if reward_type == "xp":
+            base_currency = "XP"
+        else:
+            base_currency = params.get("clue_currency") or "BEST_STAR_RANK_CRAFT_CLUE"
         currency = f"{params['rarity'].upper()}_{base_currency}"
         by_appearance = {
             "filter": "by_rarity",

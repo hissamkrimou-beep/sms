@@ -472,7 +472,7 @@ else:
 
             milestone_reward_type = st.selectbox(
                 "Type de reward",
-                ["Clues", "Essence", "Market Credit"],
+                ["Clues", "Essence", "Market Credit", "XP"],
                 key="fb_ms_reward_type",
             )
 
@@ -489,6 +489,8 @@ else:
                         st.session_state[f"fb_ms_rw_{j}"] = 50 * (j + 1)
                     elif milestone_reward_type == "Clues":
                         st.session_state[f"fb_ms_rw_{j}"] = j + 1
+                    elif milestone_reward_type == "XP":
+                        st.session_state[f"fb_ms_rw_{j}"] = 300 * (j + 1)
                     else:  # Market Credit
                         st.session_state[f"fb_ms_rw_{j}"] = 100 * (j + 1)
                 st.session_state["_fb_ms_rw_prev_type"] = milestone_reward_type
@@ -507,6 +509,11 @@ else:
                         amt = int(st.number_input(
                             f"MS{i + 1} ({ms_label}) — qté",
                             min_value=1, value=50 * (i + 1), step=5, key=f"fb_ms_rw_{i}",
+                        ))
+                    elif milestone_reward_type == "XP":
+                        amt = int(st.number_input(
+                            f"MS{i + 1} ({ms_label}) — XP",
+                            min_value=1, value=300 * (i + 1), step=50, key=f"fb_ms_rw_{i}",
                         ))
                     else:
                         amt = int(st.number_input(
@@ -581,7 +588,7 @@ else:
             },
         }
 
-        reward_type = st.selectbox("Type de reward", ["essence", "clues", "market credit"])
+        reward_type = st.selectbox("Type de reward", ["essence", "clues", "market credit", "xp"])
 
         if reward_type == "clues":
             sport_clues = {label: currency for label, currency in CLUE_OPTIONS_BY_SPORT[sport]}
@@ -623,6 +630,13 @@ else:
             "unique":     (2, 10),
         }
 
+        XP_REWARDS_BY_RARITY = {
+            "limited":    (300, 1500),
+            "rare":       (300, 1500),
+            "super_rare": (300, 1500),
+            "unique":     (300, 1500),
+        }
+
         if reward_type == "market credit":
             pass  # Config already done above
         elif len(rarities) == 1:
@@ -630,13 +644,19 @@ else:
             if reward_type == "clues":
                 default_per_pick = CLUE_REWARDS_BY_RARITY[rarities[0]][0]
                 default_total = CLUE_REWARDS_BY_RARITY[rarities[0]][1]
+            elif reward_type == "xp":
+                default_per_pick = XP_REWARDS_BY_RARITY[rarities[0]][0]
+                default_total = XP_REWARDS_BY_RARITY[rarities[0]][1]
             else:
                 default_per_pick = REWARDS_BY_RARITY[sport][rarities[0]][0]
                 default_total = REWARDS_BY_RARITY[sport][rarities[0]][1]
-            reward_per_pick = st.number_input("Reward par pick", min_value=1, value=default_per_pick, step=1)
-            reward_total = st.number_input("Reward total (0 = pas de bonus)", min_value=0, value=default_total, step=1)
+            step = 50 if reward_type == "xp" else 1
+            reward_per_pick = st.number_input("Reward par pick", min_value=1, value=default_per_pick, step=step)
+            reward_total = st.number_input("Reward total (0 = pas de bonus)", min_value=0, value=default_total, step=step)
         elif reward_type == "clues":
             st.info("Rewards clues : 2/pick, 10 total par rareté")
+        elif reward_type == "xp":
+            st.info("Rewards XP : 300/pick, 1500 total par rareté")
         else:
             st.info("Rewards auto par rareté (Football: 50/500 L/R/SR, 30/250 U — NBA: 50/250 toutes)")
 
@@ -820,6 +840,10 @@ else:
                         if flavour:
                             shard_entry["flavour"] = flavour
                         reward_config = {"card_shards": [shard_entry]}
+                    elif milestone_reward_type == "XP":
+                        reward_config = {
+                            "in_game_currencies": [{"amount": amt, "currency": f"{rarity.upper()}_XP"}]
+                        }
                     else:  # Clues
                         reward_config = {
                             "in_game_currencies": [{"amount": amt, "currency": f"{rarity.upper()}_{milestone_clue_currency}"}]
@@ -877,6 +901,8 @@ else:
                     r_total = int(reward_total)
                 elif reward_type == "clues":
                     r_per_pick, r_total = CLUE_REWARDS_BY_RARITY[rarity]
+                elif reward_type == "xp":
+                    r_per_pick, r_total = XP_REWARDS_BY_RARITY[rarity]
                 else:
                     r_per_pick, r_total = REWARDS_BY_RARITY[sport][rarity]
 
