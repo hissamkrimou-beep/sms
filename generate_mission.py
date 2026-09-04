@@ -823,7 +823,12 @@ def collect_inputs():
     print("\n--- Options avancées ---")
     params["stay_completed"] = ask_yes_no("stay_completed_at_expiration ?", default=True)
     params["disable_auto_claim"] = ask_yes_no("disable_auto_claim_at_expiration ?", default=True)
-    params["prevent_concurrent_picks"] = ask_yes_no("prevent_concurrent_picks ?", default=False)
+    if params["sport"] == "football":
+        # Les missions foot utilisent toujours prevent_same_template_concurrent_picks
+        params["prevent_concurrent_picks"] = False
+        print("prevent_same_template_concurrent_picks : true (automatique pour le foot)")
+    else:
+        params["prevent_concurrent_picks"] = ask_yes_no("prevent_concurrent_picks ?", default=False)
 
     return params
 
@@ -865,10 +870,15 @@ def build_mission(params):
         "description": description,
         "picked_count": params["picked_count"],
         "max_player_occurence": 1,
-        "prevent_concurrent_picks": params.get("prevent_concurrent_picks", False),
         "stay_completed_at_expiration": params["stay_completed"],
         "disable_auto_claim_at_expiration": params["disable_auto_claim"],
     }
+
+    # Concurrent picks : le foot utilise prevent_same_template_concurrent_picks
+    if params["sport"] == "football":
+        mission["prevent_same_template_concurrent_picks"] = True
+    else:
+        mission["prevent_concurrent_picks"] = params.get("prevent_concurrent_picks", False)
 
     # Editions (NBA)
     if params.get("editions"):

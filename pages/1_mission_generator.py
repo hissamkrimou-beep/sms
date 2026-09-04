@@ -715,7 +715,11 @@ else:
     with st.expander("Options avancées"):
         stay_completed = st.toggle("stay_completed_at_expiration", value=True)
         disable_auto_claim = st.toggle("disable_auto_claim_at_expiration", value=True)
-        prevent_concurrent_picks = st.toggle("prevent_concurrent_picks", value=False)
+        if sport == "football":
+            prevent_concurrent_picks = False
+            st.caption("prevent_same_template_concurrent_picks : true (automatique pour le foot)")
+        else:
+            prevent_concurrent_picks = st.toggle("prevent_concurrent_picks", value=False)
         active = st.toggle("Active", value=True)
 
     # ── Bouton Générer ───────────────────────────────────────────────────
